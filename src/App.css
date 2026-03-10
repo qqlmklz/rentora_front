@@ -1,0 +1,144 @@
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top left, #1e293b, #020617 55%);
+  color: #f9fafb;
+}
+
+.safe-area {
+  padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 24px;
+  padding: 24px 22px 20px;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.85));
+  box-shadow:
+    0 22px 60px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(148, 163, 184, 0.25);
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.brand-tagline {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+}
+
+.title {
+  font-size: 1.5rem;
+  margin: 2px 0 6px;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+  color: #cbd5f5;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.primary-button {
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  color: #f9fafb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow:
+    0 12px 25px rgba(37, 99, 235, 0.5),
+    0 0 0 1px rgba(191, 219, 254, 0.35);
+}
+
+.primary-button:disabled {
+  opacity: 0.6;
+  box-shadow: none;
+  cursor: default;
+}
+
+.primary-button-icon {
+  font-size: 1.05rem;
+}
+
+.secondary-text {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.secondary-highlight {
+  color: #e5e7eb;
+}
+
+.footer {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.footer span:last-child {
+  text-align: right;
+}
+
+@media (min-width: 640px) {
+  .card {
+    padding: 24px 24px 22px;
+  }
+
+  .title {
+    font-size: 1.7rem;
+  }
+}
