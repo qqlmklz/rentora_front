@@ -1,0 +1,158 @@
+.section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 32px auto 40px;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.headerRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111111;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card,
+.cardSkeleton {
+  border-radius: 16px;
+  background-color: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+}
+
+.cardSkeleton {
+  position: relative;
+}
+
+.cardSkeleton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, #f3f4f6 0%, #e5e7eb 40%, #f3f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.imageWrapper {
+  position: relative;
+  padding-top: 64%;
+  overflow: hidden;
+}
+
+.image,
+.imagePlaceholder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.image {
+  background-size: cover;
+  background-position: center;
+}
+
+.imagePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #edeef3;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.cardBody {
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.priceMuted {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.meta {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.location {
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.empty {
+  margin-top: 12px;
+  padding: 16px 14px;
+  border-radius: 14px;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+@media (max-width: 1023px) {
+  .section {
+    padding-inline: 16px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    margin-top: 24px;
+    padding-inline: 16px;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card,
+  .cardSkeleton {
+    min-height: 0;
+  }
+}
+

@@ -1,0 +1,191 @@
+.wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  box-sizing: border-box;
+}
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0;
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.field,
+.fieldGroup {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 12px;
+}
+
+.field:first-of-type {
+  padding-left: 0;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555555;
+  margin-bottom: 6px;
+}
+
+.select,
+.input {
+  width: 100%;
+  min-width: 100px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #111111;
+  background-color: #f5f6fa;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 12px;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.select:hover:not(:disabled),
+.input:hover {
+  border-color: rgba(74, 67, 236, 0.3);
+}
+
+.select:focus,
+.input:focus {
+  outline: none;
+  border-color: #4a43ec;
+  background-color: #ffffff;
+}
+
+.select:disabled,
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input::placeholder {
+  color: #999999;
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priceRow .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.priceDash {
+  color: #999999;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.separator {
+  width: 1px;
+  align-self: stretch;
+  min-height: 32px;
+  background-color: rgba(15, 23, 42, 0.08);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.buttonWrap {
+  flex-shrink: 0;
+  padding-left: 8px;
+}
+
+.submitButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background-color: #4a43ec;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.submitButton:hover {
+  background-color: #3d37d0;
+}
+
+.submitButton:active {
+  transform: scale(0.98);
+}
+
+.submitButton:focus-visible {
+  outline: 2px solid #4a43ec;
+  outline-offset: 2px;
+}
+
+/* Tablet: stack slightly or reduce min-width */
+@media (max-width: 1023px) {
+  .form {
+    padding: 14px 16px;
+  }
+
+  .field,
+  .fieldGroup {
+    min-width: 120px;
+    padding: 0 8px;
+  }
+
+  .separator {
+    margin: 0 2px;
+  }
+}
+
+/* Mobile: vertical stack */
+@media (max-width: 767px) {
+  .wrapper {
+    padding: 20px 16px;
+  }
+
+  .form {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .field,
+  .fieldGroup {
+    padding: 0;
+    margin-bottom: 12px;
+  }
+
+  .field:last-of-type,
+  .fieldGroup:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .separator {
+    width: 100%;
+    height: 1px;
+    min-height: 1px;
+    margin: 8px 0;
+  }
+
+  .buttonWrap {
+    padding: 8px 0 0;
+    align-self: center;
+  }
+
+  .submitButton {
+    width: 56px;
+    height: 56px;
+  }
+}

@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at top left, #1e293b, #020617 55%);
+  background-color: #EDEEF3;
   color: #f9fafb;
 }
 
