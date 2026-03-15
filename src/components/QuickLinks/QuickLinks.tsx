@@ -1,11 +1,11 @@
-import type { FC } from 'react'
+import type { FC, ReactNode } from 'react'
 import { FileText, Inbox, Settings, FolderOutput } from 'lucide-react'
 import styles from './quickLinks.module.css'
 
 type LinkItem = {
   label: string
   href: string
-  icon: JSX.Element
+  icon: ReactNode
 }
 
 const items: LinkItem[] = [

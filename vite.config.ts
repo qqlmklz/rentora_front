@@ -4,6 +4,14 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
@@ -38,13 +46,16 @@ export default defineConfig({
         ],
       },
       workbox: {
-        navigateFallback: '/offline.html',
+        // SPA: любой маршрут (/profile и т.д.) отдаём приложение (index.html)
+        navigateFallback: '/',
+        navigateFallbackDenylist: [/^\/api\//, /\/offline\.html$/],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {
               cacheName: 'html-cache',
+              networkTimeoutSeconds: 5,
             },
           },
           {

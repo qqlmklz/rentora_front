@@ -73,6 +73,17 @@
   box-shadow: 0 0 0 1px rgba(74, 67, 236, 0.35);
 }
 
+.input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.errorMessage {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: #dc2626;
+}
+
 .forgotRow {
   display: flex;
   justify-content: flex-end;
@@ -117,6 +128,12 @@
 .submitButton:active {
   transform: translateY(1px);
   box-shadow: 0 10px 24px rgba(74, 67, 236, 0.4);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .footer {

@@ -1,4 +1,6 @@
 import type { FC } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Heart, MessageCircle, Menu } from 'lucide-react'
 import styles from './header.module.css'
 
@@ -13,13 +15,34 @@ type HeaderProps = {
 }
 
 export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const avatarRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handleClickOutside = (event: MouseEvent) => {
+      if (avatarRef.current && !avatarRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [dropdownOpen])
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setDropdownOpen(false)
+    window.location.reload()
+  }
+
   return (
     <header className={styles.headerRoot}>
       <div className={styles.headerInner}>
         <div className={styles.left}>
-          <button type="button" className={styles.logo} aria-label="rentora">
+          <Link to="/" className={styles.logo} aria-label="Rentora — на главную">
             rentora
-          </button>
+          </Link>
         </div>
 
         <nav className={styles.nav} aria-label="Основная навигация">
@@ -56,19 +79,41 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
             Разместить объявление
           </button>
           {user ? (
-            <a
-              href="/profile"
-              className={styles.avatarButton}
-              aria-label={`Профиль пользователя ${user.name}`}
-            >
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className={styles.avatarImage} />
-              ) : (
-                <span className={styles.avatarFallback}>
-                  {user.name ? user.name.charAt(0).toUpperCase() : 'R'}
-                </span>
+            <div className={styles.avatarWrap} ref={avatarRef}>
+              <button
+                type="button"
+                className={styles.avatarButton}
+                aria-label={`Профиль пользователя ${user.name}`}
+                aria-expanded={dropdownOpen}
+                onClick={() => setDropdownOpen((v) => !v)}
+              >
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className={styles.avatarImage} />
+                ) : (
+                  <span className={styles.avatarFallback}>
+                    {user.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                  </span>
+                )}
+              </button>
+              {dropdownOpen && (
+                <div className={styles.dropdown}>
+                  <Link
+                    to="/profile"
+                    className={styles.dropdownItem}
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    Личный кабинет
+                  </Link>
+                  <button
+                    type="button"
+                    className={styles.dropdownItem}
+                    onClick={handleLogout}
+                  >
+                    Выйти
+                  </button>
+                </div>
               )}
-            </a>
+            </div>
           ) : (
             <button
               type="button"
