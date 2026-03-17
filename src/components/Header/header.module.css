@@ -63,6 +63,7 @@
   color: #333333;
   cursor: pointer;
   transition: color 0.15s ease;
+  text-decoration: none;
 }
 
 .navItem:hover {

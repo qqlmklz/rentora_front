@@ -1,4 +1,12 @@
-import { getProfileUrl, getAuthHeaders } from './api'
+import { getProfileUrl, getAuthHeaders, getApiBase } from './api'
+
+function resolveAvatarUrl(value?: string | null): string | null {
+  if (!value) return null
+  if (/^https?:\/\//.test(value)) return value
+  const base = getApiBase()
+  if (!base) return value
+  return value.startsWith('/') ? `${base}${value}` : `${base}/${value}`
+}
 
 export type Profile = {
   id?: string
@@ -15,7 +23,7 @@ export async function fetchProfile(): Promise<Profile> {
   const data = await res.json()
   return {
     ...data,
-    avatarUrl: data.avatarUrl ?? data.avatar ?? null,
+    avatarUrl: resolveAvatarUrl(data.avatarUrl ?? data.avatar ?? null),
   }
 }
 
@@ -27,7 +35,11 @@ export async function updateProfile(data: { name?: string; email?: string; phone
     body: JSON.stringify(data),
   })
   if (!res.ok) throw new Error(await res.text().catch(() => `Update failed: ${res.status}`))
-  return res.json()
+  const updated = await res.json()
+  return {
+    ...updated,
+    avatarUrl: resolveAvatarUrl(updated.avatarUrl ?? updated.avatar ?? null),
+  }
 }
 
 export async function updateAvatar(file: File): Promise<{ avatarUrl?: string }> {
@@ -42,7 +54,7 @@ export async function updateAvatar(file: File): Promise<{ avatarUrl?: string }> 
   })
   if (!res.ok) throw new Error(await res.text().catch(() => `Avatar update failed: ${res.status}`))
   const data = await res.json()
-  return { avatarUrl: data.avatarUrl ?? data.avatar }
+  return { avatarUrl: resolveAvatarUrl(data.avatarUrl ?? data.avatar ?? null) ?? undefined }
 }
 
 export async function deleteAvatar(): Promise<void> {

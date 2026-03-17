@@ -1,0 +1,237 @@
+.root {
+  padding: 32px 20px 40px;
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #111111;
+}
+
+.contentRow {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.filtersCard {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.filtersForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.field,
+.fieldGroup {
+  flex: 1 1 160px;
+  min-width: 140px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555555;
+  margin-bottom: 4px;
+}
+
+.select,
+.input {
+  width: 100%;
+  padding: 9px 10px;
+  font-size: 14px;
+  color: #111111;
+  background-color: #f5f6fa;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 12px;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.select:hover:not(:disabled),
+.input:hover {
+  border-color: rgba(74, 67, 236, 0.3);
+}
+
+.select:focus,
+.input:focus {
+  outline: none;
+  border-color: #4a43ec;
+  background-color: #ffffff;
+}
+
+.select:disabled,
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priceRow .input {
+  flex: 1;
+}
+
+.priceDash {
+  color: #999999;
+  font-size: 14px;
+}
+
+.sortField {
+  max-width: 220px;
+}
+
+.listCard {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px 20px 22px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.listTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111111;
+}
+
+.listInfo {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.card:hover {
+  border-color: rgba(74, 67, 236, 0.4);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.cardImageWrap {
+  position: relative;
+  width: 100%;
+  padding-top: 64%;
+  background: #edeef3;
+}
+
+.cardImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardBody {
+  padding: 10px 12px 12px;
+}
+
+.price {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111111;
+}
+
+.meta {
+  margin: 0;
+  font-size: 13px;
+  color: #374151;
+}
+
+.location {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.empty,
+.error,
+.loading {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.error {
+  color: #dc2626;
+}
+
+@media (max-width: 1023px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .root {
+    padding: 24px 16px 32px;
+  }
+
+  .filtersForm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .field,
+  .fieldGroup,
+  .sortField {
+    min-width: 100%;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+

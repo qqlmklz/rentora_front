@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import type { Profile } from '../services/profileApi'
 import {
   fetchProfile,
@@ -27,6 +27,8 @@ export function ProfilePage() {
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarBroken, setAvatarBroken] = useState(false)
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [passwordOpen, setPasswordOpen] = useState(false)
@@ -46,6 +48,7 @@ export function ProfilePage() {
       .then((data) => {
         if (!cancelled) {
           setProfile(data)
+          setCurrentAvatar(data.avatarUrl ?? null)
           setEditName(data.name)
           setEditEmail(data.email)
           setEditPhone(data.phone ?? '')
@@ -70,6 +73,7 @@ export function ProfilePage() {
     const file = e.target.files?.[0]
     if (!file) return
     setAvatarError(null)
+    setAvatarBroken(false)
     if (avatarPreview) URL.revokeObjectURL(avatarPreview)
     const newPreview = URL.createObjectURL(file)
     setSelectedFile(file)
@@ -81,6 +85,7 @@ export function ProfilePage() {
       .then((data) => {
         const url = data.avatarUrl ?? null
         setProfile((p) => (p ? { ...p, avatarUrl: url ?? p.avatarUrl } : null))
+        setCurrentAvatar(url)
         URL.revokeObjectURL(newPreview)
         setAvatarPreview(null)
         setSelectedFile(null)
@@ -104,15 +109,17 @@ export function ProfilePage() {
     setAvatarLoading(true)
     try {
       const data = await updateAvatar(selectedFile)
-      setProfile((p) => (p ? { ...p, avatarUrl: data.avatarUrl ?? p.avatarUrl } : null))
+      const url = data.avatarUrl ?? null
+      setProfile((p) => (p ? { ...p, avatarUrl: url ?? p.avatarUrl } : null))
+      setCurrentAvatar(url)
       if (avatarPreview) URL.revokeObjectURL(avatarPreview)
       setAvatarPreview(null)
       setSelectedFile(null)
       const raw = localStorage.getItem('user')
-      if (raw && data.avatarUrl) {
+      if (raw) {
         try {
           const u = JSON.parse(raw)
-          localStorage.setItem('user', JSON.stringify({ ...u, avatarUrl: data.avatarUrl }))
+          localStorage.setItem('user', JSON.stringify({ ...u, avatarUrl: url }))
         } catch {
           // ignore
         }
@@ -126,6 +133,7 @@ export function ProfilePage() {
 
   const handleAvatarRemove = () => {
     setAvatarError(null)
+    setAvatarBroken(false)
     if (avatarPreview) {
       URL.revokeObjectURL(avatarPreview)
       setAvatarPreview(null)
@@ -135,6 +143,7 @@ export function ProfilePage() {
     deleteAvatar()
       .then(() => {
         setProfile((p) => (p ? { ...p, avatarUrl: null } : null))
+        setCurrentAvatar(null)
         const raw = localStorage.getItem('user')
         if (raw) {
           try {
@@ -155,18 +164,26 @@ export function ProfilePage() {
     setEditError(null)
     setEditSaving(true)
     try {
-      const updated = await updateProfile({
+      const updatedFromApi = await updateProfile({
         name: editName,
         email: editEmail,
         phone: editPhone || null,
       })
-      setProfile(updated)
+      const merged: Profile = {
+        ...(profile ?? ({} as Profile)),
+        ...updatedFromApi,
+      }
+      // Если бэкенд не вернул avatar, не затираем текущий
+      if (!updatedFromApi.avatarUrl && currentAvatar) {
+        merged.avatarUrl = currentAvatar
+      }
+      setProfile(merged)
       setEditMode(false)
       const raw = localStorage.getItem('user')
       if (raw) {
         try {
-          const u = JSON.parse(raw)
-          localStorage.setItem('user', JSON.stringify({ ...u, name: updated.name, email: updated.email }))
+          JSON.parse(raw)
+          localStorage.setItem('user', JSON.stringify(merged))
         } catch {
           // ignore
         }
@@ -231,14 +248,17 @@ export function ProfilePage() {
           <a href="/profile" className={styles.sidebarLinkActive}>
             Профиль
           </a>
+          <Link to="/profile/favorites" className={styles.sidebarLink}>
+            Избранное
+          </Link>
           <a href="/profile/properties" className={styles.sidebarLink}>
             Мои объекты
           </a>
-          <a href="/profile/documents" className={styles.sidebarLink}>
-            Документы
-          </a>
           <a href="/profile/requests" className={styles.sidebarLink}>
             Заявки
+          </a>
+          <a href="/profile/documents" className={styles.sidebarLink}>
+            Документы
           </a>
           <a href="/profile/settings" className={styles.sidebarLink}>
             Настройки
@@ -253,11 +273,24 @@ export function ProfilePage() {
 
             <div className={styles.avatarRow}>
               <div className={styles.avatarWrap}>
-                {avatarPreview || profile.avatarUrl ? (
+                {avatarPreview ? (
                   <img
-                    src={avatarPreview ?? profile.avatarUrl ?? ''}
+                    src={avatarPreview}
                     alt={profile.name}
                     className={styles.avatarImg}
+                    onError={() => {
+                      setAvatarBroken(true)
+                      setAvatarPreview(null)
+                    }}
+                  />
+                ) : currentAvatar && !avatarBroken ? (
+                  <img
+                    src={currentAvatar}
+                    alt={profile.name}
+                    className={styles.avatarImg}
+                    onError={() => {
+                      setAvatarBroken(true)
+                    }}
                   />
                 ) : (
                   <span className={styles.avatarFallback}>
@@ -266,7 +299,7 @@ export function ProfilePage() {
                 )}
               </div>
               <div className={styles.avatarActions}>
-                {!(avatarPreview || profile.avatarUrl) ? (
+                {!(avatarPreview || currentAvatar) ? (
                   <label className={styles.avatarButton}>
                     <input
                       ref={fileInputRef}

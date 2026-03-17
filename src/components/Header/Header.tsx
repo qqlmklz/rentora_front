@@ -40,15 +40,15 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
     <header className={styles.headerRoot}>
       <div className={styles.headerInner}>
         <div className={styles.left}>
-          <Link to="/" className={styles.logo} aria-label="Rentora — на главную">
+          <Link to="/" className={styles.logo} aria-label="rentora">
             rentora
           </Link>
         </div>
 
         <nav className={styles.nav} aria-label="Основная навигация">
-          <button type="button" className={`${styles.navItem} ${styles.navItemActive}`}>
+          <Link to="/catalog" className={`${styles.navItem} ${styles.navItemActive}`}>
             Каталог
-          </button>
+          </Link>
           <button type="button" className={styles.navItem}>
             Коммерческая
           </button>
