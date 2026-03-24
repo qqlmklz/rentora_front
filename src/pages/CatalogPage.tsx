@@ -72,7 +72,7 @@ function formatDetails(item: CatalogItem): string {
   const parts: string[] = []
   if (item.propertyType) parts.push(item.propertyType)
   if (item.rooms !== null && item.rooms !== undefined && item.rooms !== '') parts.push(`${item.rooms} комн.`)
-  if (item.area !== null && item.area !== undefined && item.area !== '') parts.push(`${item.area} м²`)
+  if (item.totalArea !== null && item.totalArea !== undefined && item.totalArea !== '') parts.push(`${item.totalArea} м²`)
   return parts.join(' · ')
 }
 
@@ -310,10 +310,13 @@ export function CatalogPage() {
                               }))
                             }
                           />
-                        ) : null}
+                        ) : (
+                          <span className={styles.cardImagePlaceholder}>Фото</span>
+                        )}
                       </div>
                       <div className={styles.cardBody}>
                         {price && <p className={styles.price}>{price}</p>}
+                        {item.title && <p className={styles.cardTitle}>{item.title}</p>}
                         <p className={styles.meta}>{details || 'Объявление'}</p>
                         {location && <p className={styles.location}>{location}</p>}
                       </div>

@@ -75,9 +75,9 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
           >
             <Heart size={20} />
           </button>
-          <button type="button" className={styles.secondaryButton}>
+          <Link to="/properties/new" className={styles.secondaryButton}>
             Разместить объявление
-          </button>
+          </Link>
           {user ? (
             <div className={styles.avatarWrap} ref={avatarRef}>
               <button

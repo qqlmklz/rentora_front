@@ -239,6 +239,9 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
   transition:
     background-color 0.15s ease,
     color 0.15s ease,

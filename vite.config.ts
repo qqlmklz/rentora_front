@@ -10,6 +10,10 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/uploads': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
   plugins: [
@@ -47,8 +51,8 @@ export default defineConfig({
       },
       workbox: {
         // SPA: любой маршрут (/profile и т.д.) отдаём приложение (index.html)
-        navigateFallback: '/',
-        navigateFallbackDenylist: [/^\/api\//, /\/offline\.html$/],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//, /\/offline\.html$/],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
