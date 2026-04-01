@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Heart, MessageCircle } from 'lucide-react'
 import { getApiBase, getAuthHeaders } from '../services/api'
+import {
+  addFavorite,
+  deleteFavorite,
+  fetchFavorites,
+  FAVORITES_CHANGED_EVENT,
+  isFavoritePropertyId,
+} from '../services/favoritesApi'
 import styles from './PropertyPage.module.css'
 
 type Property = {
@@ -80,6 +87,22 @@ function labelUtilities(v: string | null | undefined): string {
   return v
 }
 
+/** API может отдавать строку или boolean — приводим к строке для отображения */
+function normalizeUtilitiesIncluded(raw: unknown): string | null {
+  if (raw === null || raw === undefined) return null
+  if (typeof raw === 'boolean') return raw ? 'included' : 'not_included'
+  if (typeof raw === 'number') {
+    if (raw === 1) return 'included'
+    if (raw === 0) return 'not_included'
+    return null
+  }
+  const s = String(raw).trim()
+  if (s === '') return null
+  if (s === 'true' || s === 'included' || s === '1') return 'included'
+  if (s === 'false' || s === 'not_included' || s === '0') return 'not_included'
+  return s
+}
+
 function labelPrepayment(v: string | null | undefined): string {
   if (v === null || v === undefined || v === '') return ''
   if (v === '0' || v === 'none') return 'Нет'
@@ -111,7 +134,7 @@ function normalizeProperty(p: Record<string, unknown>, id: string): Property {
     metro: (p.metro) as string | null,
     photos: parsePhotosFromApi(p),
     description: (p.description) as string | null,
-    utilitiesIncluded: (p.utilitiesIncluded ?? p.utilities_included) as string | null,
+    utilitiesIncluded: normalizeUtilitiesIncluded(p.utilitiesIncluded ?? p.utilities_included),
     utilitiesPrice: (p.utilitiesPrice ?? p.utilities_price) as Property['utilitiesPrice'],
     deposit: (p.deposit) as Property['deposit'],
     commissionPercent: commission as Property['commissionPercent'],
@@ -120,6 +143,8 @@ function normalizeProperty(p: Record<string, unknown>, id: string): Property {
     petsAllowed: Boolean(p.petsAllowed ?? p.allowPets ?? p.pets_allowed),
   }
 }
+
+const OPEN_AUTH_EVENT = 'rentora:open-auth'
 
 export function PropertyPage() {
   const { id } = useParams<{ id: string }>()
@@ -130,6 +155,8 @@ export function PropertyPage() {
   const [notFound, setNotFound] = useState(false)
   const [activePhoto, setActivePhoto] = useState(0)
   const [brokenPhotos, setBrokenPhotos] = useState<Record<number, boolean>>({})
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favoriteBusy, setFavoriteBusy] = useState(false)
 
   useEffect(() => {
     setActivePhoto(0)
@@ -188,6 +215,53 @@ export function PropertyPage() {
       cancelled = true
     }
   }, [id])
+
+  useEffect(() => {
+    if (!property?.id) return
+    if (!localStorage.getItem('token')) {
+      setIsFavorite(false)
+      return
+    }
+    let cancelled = false
+    fetchFavorites()
+      .then((list) => {
+        if (cancelled) return
+        setIsFavorite(isFavoritePropertyId(list, property.id))
+      })
+      .catch(() => {
+        if (!cancelled) setIsFavorite(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [property?.id])
+
+  const handleWriteClick = () => {
+    // TODO: открыть чат с владельцем объявления (когда будет API / маршрут чата)
+  }
+
+  const handleFavoriteToggle = async () => {
+    if (!property) return
+    if (!localStorage.getItem('token')) {
+      window.dispatchEvent(new CustomEvent(OPEN_AUTH_EVENT))
+      return
+    }
+    setFavoriteBusy(true)
+    try {
+      if (isFavorite) {
+        await deleteFavorite(property.id)
+        setIsFavorite(false)
+      } else {
+        await addFavorite(property.id)
+        setIsFavorite(true)
+      }
+      window.dispatchEvent(new CustomEvent(FAVORITES_CHANGED_EVENT))
+    } catch {
+      // тихо: можно позже показать toast
+    } finally {
+      setFavoriteBusy(false)
+    }
+  }
 
   const photos = property?.photos ?? []
   const photoCount = photos.length
@@ -268,94 +342,162 @@ export function PropertyPage() {
           <span className={styles.breadcrumbCurrent}>{property.title || 'Объявление'}</span>
         </nav>
 
-        <div className={styles.layout}>
-          <section className={styles.galleryCard} aria-label="Галерея">
-            {photoCount === 0 ? (
-              <div className={styles.galleryPlaceholder}>
-                <span>Фото</span>
-              </div>
-            ) : (
-              <>
-                <div className={styles.mainPhotoWrap}>
-                  {currentSrc ? (
-                    <img
-                      src={currentSrc}
-                      alt=""
-                      className={styles.mainPhotoImg}
-                      onError={() => setBrokenPhotos((prev) => ({ ...prev, [activePhoto]: true }))}
-                    />
-                  ) : (
-                    <div className={styles.galleryPlaceholderInner}>
-                      <span>Фото</span>
+        <div className={styles.pageGrid}>
+          <section className={styles.gallerySlot} aria-label="Галерея">
+            <div className={styles.galleryCard}>
+              {photoCount === 0 ? (
+                <div className={styles.galleryPlaceholder}>
+                  <span>Фото</span>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.mainPhotoWrap}>
+                    {currentSrc ? (
+                      <img
+                        src={currentSrc}
+                        alt=""
+                        className={styles.mainPhotoImg}
+                        onError={() => setBrokenPhotos((prev) => ({ ...prev, [activePhoto]: true }))}
+                      />
+                    ) : (
+                      <div className={styles.galleryPlaceholderInner}>
+                        <span>Фото</span>
+                      </div>
+                    )}
+                    {photoCount > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          className={styles.navBtn}
+                          aria-label="Предыдущее фото"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            goPrev()
+                          }}
+                        >
+                          <ChevronLeft size={28} strokeWidth={2} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.navBtn} ${styles.navBtnRight}`}
+                          aria-label="Следующее фото"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            goNext()
+                          }}
+                        >
+                          <ChevronRight size={28} strokeWidth={2} />
+                        </button>
+                        <div className={styles.photoCounter}>
+                          {activePhoto + 1} / {photoCount}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {photoCount > 1 && (
+                    <div className={styles.thumbs} role="tablist" aria-label="Миниатюры">
+                      {photos.map((ph, idx) => {
+                        const src = resolvePhotoUrl(ph)
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            role="tab"
+                            aria-selected={idx === activePhoto}
+                            className={`${styles.thumb} ${idx === activePhoto ? styles.thumbActive : ''}`}
+                            onClick={() => setActivePhoto(idx)}
+                          >
+                            {src && !brokenPhotos[idx] ? (
+                              <img
+                                src={src}
+                                alt=""
+                                className={styles.thumbImg}
+                                onError={() => setBrokenPhotos((prev) => ({ ...prev, [idx]: true }))}
+                              />
+                            ) : (
+                              <span className={styles.thumbPlaceholder} />
+                            )}
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
-                  {photoCount > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        className={styles.navBtn}
-                        aria-label="Предыдущее фото"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          goPrev()
-                        }}
-                      >
-                        <ChevronLeft size={28} strokeWidth={2} />
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.navBtn} ${styles.navBtnRight}`}
-                        aria-label="Следующее фото"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          goNext()
-                        }}
-                      >
-                        <ChevronRight size={28} strokeWidth={2} />
-                      </button>
-                      <div className={styles.photoCounter}>
-                        {activePhoto + 1} / {photoCount}
-                      </div>
-                    </>
-                  )}
-                </div>
-                {photoCount > 1 && (
-                  <div className={styles.thumbs} role="tablist" aria-label="Миниатюры">
-                    {photos.map((ph, idx) => {
-                      const src = resolvePhotoUrl(ph)
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          role="tab"
-                          aria-selected={idx === activePhoto}
-                          className={`${styles.thumb} ${idx === activePhoto ? styles.thumbActive : ''}`}
-                          onClick={() => setActivePhoto(idx)}
-                        >
-                          {src && !brokenPhotos[idx] ? (
-                            <img
-                              src={src}
-                              alt=""
-                              className={styles.thumbImg}
-                              onError={() => setBrokenPhotos((prev) => ({ ...prev, [idx]: true }))}
-                            />
-                          ) : (
-                            <span className={styles.thumbPlaceholder} />
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </>
-            )}
+                </>
+              )}
+            </div>
           </section>
 
-          <div className={styles.column}>
-            <section className={styles.card}>
-              <h1 className={styles.title}>{property.title || 'Объявление'}</h1>
-              {price && <p className={styles.price}>{price}</p>}
+          <aside className={styles.sidebarSlot}>
+            <div className={styles.sidebarSticky}>
+              <div className={styles.sidebarCard}>
+                <h1 className={styles.sidebarTitle}>{property.title || 'Объявление'}</h1>
+                {price && <p className={styles.sidebarPrice}>{price}</p>}
 
+                <div className={styles.actionRow}>
+                  <button type="button" className={styles.btnPrimary} onClick={handleWriteClick}>
+                    <MessageCircle size={18} strokeWidth={2} aria-hidden />
+                    Написать
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.btnFavorite} ${isFavorite ? styles.btnFavoriteActive : ''}`}
+                    onClick={handleFavoriteToggle}
+                    disabled={favoriteBusy}
+                    aria-pressed={isFavorite}
+                    aria-label={isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}
+                  >
+                    <Heart
+                      size={18}
+                      strokeWidth={2}
+                      className={styles.btnFavoriteIcon}
+                      fill={isFavorite ? 'currentColor' : 'none'}
+                      aria-hidden
+                    />
+                    {isFavorite ? 'В избранном' : 'В избранное'}
+                  </button>
+                </div>
+
+                <div className={styles.sidebarDivider} />
+
+                <h2 className={styles.sidebarSectionTitle}>Финансовые условия</h2>
+                <dl className={styles.sidebarDl}>
+                  {property.utilitiesIncluded != null && property.utilitiesIncluded !== '' && (
+                    <>
+                      <dt>Оплата ЖКХ</dt>
+                      <dd>{labelUtilities(property.utilitiesIncluded)}</dd>
+                    </>
+                  )}
+                  {property.utilitiesPrice != null && property.utilitiesPrice !== '' && (
+                    <>
+                      <dt>Цена ЖКХ</dt>
+                      <dd>{formatPrice(property.utilitiesPrice)}</dd>
+                    </>
+                  )}
+                  {property.deposit != null && property.deposit !== '' && (
+                    <>
+                      <dt>Залог</dt>
+                      <dd>{formatPrice(property.deposit)}</dd>
+                    </>
+                  )}
+                  {property.commissionPercent != null && property.commissionPercent !== '' && (
+                    <>
+                      <dt>Комиссия</dt>
+                      <dd>{property.commissionPercent}%</dd>
+                    </>
+                  )}
+                  {property.prepayment != null && property.prepayment !== '' && (
+                    <>
+                      <dt>Предоплата</dt>
+                      <dd>{labelPrepayment(property.prepayment)}</dd>
+                    </>
+                  )}
+                </dl>
+              </div>
+            </div>
+          </aside>
+
+          <div className={styles.belowSlot}>
+            <section className={styles.card}>
               <h2 className={styles.cardHeading}>Основная информация</h2>
               <dl className={styles.dl}>
                 {property.propertyType && (
@@ -434,42 +576,6 @@ export function PropertyPage() {
                   <>
                     <dt>Метро</dt>
                     <dd>{property.metro}</dd>
-                  </>
-                )}
-              </dl>
-            </section>
-
-            <section className={styles.card}>
-              <h2 className={styles.cardHeading}>Финансовые условия</h2>
-              <dl className={styles.dl}>
-                {property.utilitiesIncluded && (
-                  <>
-                    <dt>Оплата ЖКХ</dt>
-                    <dd>{labelUtilities(property.utilitiesIncluded)}</dd>
-                  </>
-                )}
-                {property.utilitiesPrice != null && property.utilitiesPrice !== '' && (
-                  <>
-                    <dt>Цена ЖКХ</dt>
-                    <dd>{formatPrice(property.utilitiesPrice)}</dd>
-                  </>
-                )}
-                {property.deposit != null && property.deposit !== '' && (
-                  <>
-                    <dt>Залог</dt>
-                    <dd>{formatPrice(property.deposit)}</dd>
-                  </>
-                )}
-                {property.commissionPercent != null && property.commissionPercent !== '' && (
-                  <>
-                    <dt>Комиссия</dt>
-                    <dd>{property.commissionPercent}%</dd>
-                  </>
-                )}
-                {property.prepayment != null && property.prepayment !== '' && (
-                  <>
-                    <dt>Предоплата</dt>
-                    <dd>{labelPrepayment(property.prepayment)}</dd>
                   </>
                 )}
               </dl>

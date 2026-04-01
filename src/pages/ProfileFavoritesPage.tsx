@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { fetchFavorites, deleteFavorite, type FavoriteProperty } from '../services/favoritesApi'
+import {
+  fetchFavorites,
+  deleteFavorite,
+  FAVORITES_CHANGED_EVENT,
+  type FavoriteProperty,
+} from '../services/favoritesApi'
 import styles from './ProfilePage.module.css'
 import favStyles from './ProfileFavoritesPage.module.css'
 
@@ -32,6 +37,13 @@ export function ProfileFavoritesPage() {
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [brokenPhotos, setBrokenPhotos] = useState<Record<string, boolean>>({})
 
+  const silentReloadFavorites = useCallback(() => {
+    if (!localStorage.getItem('token')) return
+    fetchFavorites()
+      .then((data) => setItems(data))
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     if (!localStorage.getItem('token')) {
       navigate('/', { replace: true })
@@ -56,6 +68,12 @@ export function ProfileFavoritesPage() {
       cancelled = true
     }
   }, [navigate])
+
+  useEffect(() => {
+    const onChanged = () => silentReloadFavorites()
+    window.addEventListener(FAVORITES_CHANGED_EVENT, onChanged)
+    return () => window.removeEventListener(FAVORITES_CHANGED_EVENT, onChanged)
+  }, [silentReloadFavorites])
 
   const empty = useMemo(() => !loading && !error && items.length === 0, [loading, error, items.length])
 

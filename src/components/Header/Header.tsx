@@ -68,16 +68,28 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
           >
             <MessageCircle size={20} />
           </button>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Избранное"
-          >
-            <Heart size={20} />
-          </button>
-          <Link to="/properties/new" className={styles.secondaryButton}>
-            Разместить объявление
-          </Link>
+          {user ? (
+            <Link to="/profile/favorites" className={styles.iconButton} aria-label="Избранное">
+              <Heart size={20} />
+            </Link>
+          ) : (
+            <button type="button" className={styles.iconButton} aria-label="Избранное" onClick={onLoginClick}>
+              <Heart size={20} />
+            </button>
+          )}
+          {user ? (
+            <Link to="/properties/new" className={styles.secondaryButton}>
+              Разместить объявление
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={onLoginClick}
+            >
+              Разместить объявление
+            </button>
+          )}
           {user ? (
             <div className={styles.avatarWrap} ref={avatarRef}>
               <button

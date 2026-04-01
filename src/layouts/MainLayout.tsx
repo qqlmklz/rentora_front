@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Header } from '../components/Header/Header'
 import { AuthModal } from '../components/AuthModal/AuthModal'
 import { RegisterModal } from '../components/RegisterModal/RegisterModal'
@@ -17,10 +17,21 @@ function getAuthUser(): { name: string; avatarUrl?: string | null } | null {
   }
 }
 
+const OPEN_AUTH_EVENT = 'rentora:open-auth'
+
 export function MainLayout({ children }: PropsWithChildren) {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isRegisterOpen, setIsRegisterOpen] = useState(false)
   const [user] = useState(getAuthUser)
+
+  useEffect(() => {
+    const onOpenAuth = () => {
+      setIsRegisterOpen(false)
+      setIsAuthOpen(true)
+    }
+    window.addEventListener(OPEN_AUTH_EVENT, onOpenAuth)
+    return () => window.removeEventListener(OPEN_AUTH_EVENT, onOpenAuth)
+  }, [])
 
   const openAuth = () => {
     setIsRegisterOpen(false)

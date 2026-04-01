@@ -1,6 +1,5 @@
 .page {
   min-height: calc(100vh - 80px);
-  background: #f5f6fa;
   padding: 24px 20px 48px;
 }
 
@@ -104,18 +103,118 @@
   color: #374151;
 }
 
-.layout {
+.pageGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
   gap: 24px;
   align-items: start;
+}
+
+.gallerySlot {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.sidebarSlot {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.sidebarSticky {
+  position: sticky;
+  top: 88px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebarCard {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 22px 22px 20px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.sidebarTitle {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111111;
+  line-height: 1.3;
+}
+
+.sidebarPrice {
+  margin: 0 0 18px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #111111;
+  letter-spacing: -0.02em;
+}
+
+.sidebarCard .actionRow {
+  margin-bottom: 0;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.sidebarCard .actionRow .btnPrimary,
+.sidebarCard .actionRow .btnFavorite {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+}
+
+.sidebarDivider {
+  height: 1px;
+  margin: 20px 0 18px;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.sidebarSectionTitle {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.sidebarDl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px 0;
+  font-size: 14px;
+}
+
+.sidebarDl dt {
+  margin: 0;
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.sidebarDl dd {
+  margin: 2px 0 0;
+  color: #111111;
+  font-weight: 500;
+}
+
+.belowSlot {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 4px;
 }
 
 .galleryCard {
   background: #ffffff;
   border-radius: 20px;
   padding: 16px;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
   border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
@@ -240,12 +339,6 @@
   height: 100%;
 }
 
-.column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .card {
   background: #ffffff;
   border-radius: 20px;
@@ -254,19 +347,75 @@
   border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.title {
-  margin: 0 0 8px;
-  font-size: 22px;
-  font-weight: 700;
-  color: #111111;
-  line-height: 1.25;
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.price {
-  margin: 0 0 18px;
-  font-size: 24px;
-  font-weight: 700;
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 14px;
+  background: #4a43ec;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.08s ease;
+}
+
+.btnPrimary:hover {
+  background: #3d37d0;
+}
+
+.btnPrimary:active {
+  transform: scale(0.98);
+}
+
+.btnFavorite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 25px;
+  border: 2px solid rgba(74, 67, 236, 0.35);
+  border-radius: 14px;
+  background: #ffffff;
   color: #4a43ec;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.btnFavorite:hover:not(:disabled) {
+  border-color: #4a43ec;
+  background: rgba(74, 67, 236, 0.06);
+}
+
+.btnFavorite:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.btnFavoriteActive {
+  border-color: #4a43ec;
+  background: rgba(74, 67, 236, 0.12);
+  color: #3d37d0;
+}
+
+.btnFavoriteIcon {
+  flex-shrink: 0;
 }
 
 .cardHeading {
@@ -314,16 +463,29 @@
 }
 
 @media (max-width: 960px) {
-  .layout {
+  .pageGrid {
     grid-template-columns: 1fr;
   }
 
-  .column {
-    order: 2;
+  .gallerySlot {
+    grid-column: 1;
+    grid-row: 1;
   }
 
-  .galleryCard {
-    order: 1;
+  .sidebarSlot {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .belowSlot {
+    grid-column: 1;
+    grid-row: 3;
+    margin-top: 0;
+  }
+
+  .sidebarSticky {
+    position: static;
+    top: auto;
   }
 }
 
@@ -345,11 +507,11 @@
     margin-top: 0;
   }
 
-  .title {
+  .sidebarTitle {
     font-size: 20px;
   }
 
-  .price {
+  .sidebarPrice {
     font-size: 22px;
   }
 

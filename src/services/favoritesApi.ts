@@ -1,5 +1,8 @@
 import { getProfileUrl, getAuthHeaders, getApiBase } from './api'
 
+/** Событие после изменения избранного (добавление/удаление на других страницах). */
+export const FAVORITES_CHANGED_EVENT = 'rentora:favorites-changed'
+
 export type FavoriteProperty = {
   id: string
   photoUrl?: string | null
@@ -53,9 +56,23 @@ export async function fetchFavorites(): Promise<FavoriteProperty[]> {
   return list.map(normalizeItem).filter(Boolean) as FavoriteProperty[]
 }
 
+export async function addFavorite(propertyId: string): Promise<void> {
+  const url = getProfileUrl(`/api/favorites/${encodeURIComponent(propertyId)}`)
+  const token = localStorage.getItem('token')
+  const headers: Record<string, string> = {}
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(url, { method: 'POST', headers })
+  if (!res.ok) throw new Error(await res.text().catch(() => `Favorite add failed: ${res.status}`))
+}
+
 export async function deleteFavorite(propertyId: string): Promise<void> {
   const url = getProfileUrl(`/api/favorites/${encodeURIComponent(propertyId)}`)
   const res = await fetch(url, { method: 'DELETE', headers: getAuthHeaders() })
   if (!res.ok) throw new Error(await res.text().catch(() => `Favorite delete failed: ${res.status}`))
+}
+
+/** Проверка, есть ли объявление в списке избранного (после GET /api/favorites). */
+export function isFavoritePropertyId(items: FavoriteProperty[], propertyId: string): boolean {
+  return items.some((item) => String(item.id) === String(propertyId))
 }
 
