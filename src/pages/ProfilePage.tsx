@@ -251,9 +251,9 @@ export function ProfilePage() {
           <Link to="/profile/favorites" className={styles.sidebarLink}>
             Избранное
           </Link>
-          <a href="/profile/properties" className={styles.sidebarLink}>
+          <Link to="/profile/properties" className={styles.sidebarLink}>
             Мои объекты
-          </a>
+          </Link>
           <a href="/profile/requests" className={styles.sidebarLink}>
             Заявки
           </a>

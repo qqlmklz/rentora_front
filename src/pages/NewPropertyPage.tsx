@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getApiBase } from '../services/api'
+import { Link, useMatch, useNavigate } from 'react-router-dom'
+import { getApiBase, getAuthHeaders, getProfileUrl } from '../services/api'
+import {
+  mapPropertyApiToForm,
+  parseAndNormalizePhotosFromPayload,
+  extractPropertyPhotoPayload,
+  normalizePhotoPathForStorage,
+  resolvePhotoUrlForForm,
+} from '../utils/propertyFormMap'
 import styles from './NewPropertyPage.module.css'
 
 type RentType = '' | 'long' | 'daily'
@@ -91,22 +98,142 @@ const ROOMS_OPTIONS = [
   { value: '6+', label: '6+' },
 ] as const
 
+/** Поля PATCH /api/properties/:id (как в ТЗ) */
+const PATCH_FORM_KEYS: (keyof FormState)[] = [
+  'title',
+  'rentType',
+  'category',
+  'subcategory',
+  'address',
+  'city',
+  'district',
+  'metro',
+  'apartmentNumber',
+  'rooms',
+  'totalArea',
+  'livingArea',
+  'kitchenArea',
+  'floor',
+  'floorsTotal',
+  'residentialType',
+  'price',
+  'utilitiesIncluded',
+  'utilitiesPrice',
+  'deposit',
+  'commission',
+  'prepayment',
+  'allowChildren',
+  'allowPets',
+]
+
+/** Объект с полем photos из ответа PATCH или GET */
+function extractPhotosContainer(raw: unknown): Record<string, unknown> | null {
+  return (
+    extractPropertyPhotoPayload(raw) ??
+    (raw &&
+    typeof raw === 'object' &&
+    Array.isArray((raw as Record<string, unknown>).photos)
+      ? (raw as Record<string, unknown>)
+      : null)
+  )
+}
+
+function appendPatchFormData(fd: FormData, form: FormState) {
+  PATCH_FORM_KEYS.forEach((key) => {
+    const value = form[key]
+    if (typeof value === 'boolean') {
+      fd.append(key, value ? 'true' : 'false')
+    } else if (value !== '' && value !== null && value !== undefined) {
+      fd.append(key, String(value))
+    }
+  })
+  if (form.subcategory) {
+    fd.append('propertyType', form.subcategory)
+  }
+}
+
 export function NewPropertyPage() {
   const navigate = useNavigate()
+  const matchEdit = useMatch('/properties/:id/edit')
+  const editId = matchEdit?.params.id
+  const isEdit = Boolean(editId)
+
   const [form, setForm] = useState<FormState>(initialState)
   const [touched, setTouched] = useState<Record<string, boolean>>({})
-  const [photos, setPhotos] = useState<File[]>([])
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
+  /** Новые файлы (только что выбранные пользователем) */
+  const [newPhotos, setNewPhotos] = useState<File[]>([])
+  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
+  /** Пути сохранённых на бэке фото (оставшиеся после удаления из UI) — уходит в PATCH existingPhotos */
+  const [existingPhotos, setExistingPhotos] = useState<string[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
   const [submitLoading, setSubmitLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
+  const [propertyLoading, setPropertyLoading] = useState(isEdit)
+  const [propertyLoadError, setPropertyLoadError] = useState<string | null>(null)
+  const [loadForbidden, setLoadForbidden] = useState(false)
 
   useEffect(() => {
     return () => {
-      photoPreviews.forEach((u) => URL.revokeObjectURL(u))
+      newPhotoPreviews.forEach((u) => URL.revokeObjectURL(u))
     }
-  }, [photoPreviews])
+  }, [newPhotoPreviews])
+
+  useEffect(() => {
+    if (!isEdit || !editId) return
+    if (!localStorage.getItem('token')) {
+      navigate('/', { replace: true })
+      return
+    }
+    let cancelled = false
+    setPropertyLoading(true)
+    setPropertyLoadError(null)
+    setLoadForbidden(false)
+    const url = getProfileUrl(`/api/properties/${encodeURIComponent(editId)}`)
+    fetch(url, { headers: getAuthHeaders() })
+      .then(async (res) => {
+        if (res.status === 401) {
+          navigate('/', { replace: true })
+          return null
+        }
+        if (res.status === 403) {
+          return { kind: 'forbidden' as const }
+        }
+        if (res.status === 404) {
+          return { kind: 'not_found' as const }
+        }
+        if (!res.ok) {
+          const text = await res.text().catch(() => '')
+          throw new Error(text || `Ошибка загрузки: ${res.status}`)
+        }
+        const data = (await res.json()) as Record<string, unknown>
+        return { kind: 'ok' as const, data }
+      })
+      .then((result) => {
+        if (cancelled || result === null) return
+        if (result.kind === 'forbidden') {
+          setLoadForbidden(true)
+          setPropertyLoadError('Нет доступа к редактированию этого объявления.')
+          return
+        }
+        if (result.kind === 'not_found') {
+          setPropertyLoadError('Объявление не найдено.')
+          return
+        }
+        setForm(mapPropertyApiToForm(result.data) as FormState)
+        const loaded = parseAndNormalizePhotosFromPayload(result.data)
+        setExistingPhotos(loaded)
+      })
+      .catch((e) => {
+        if (!cancelled) setPropertyLoadError(e instanceof Error ? e.message : 'Не удалось загрузить объявление')
+      })
+      .finally(() => {
+        if (!cancelled) setPropertyLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isEdit, editId, navigate])
 
   const subcategoryOptions = useMemo(() => {
     if (form.category === 'residential') return RESIDENTIAL_SUBCATEGORIES
@@ -128,9 +255,14 @@ export function NewPropertyPage() {
     if (form.utilitiesIncluded === 'not_included' && !form.utilitiesPrice.trim()) {
       e.utilitiesPrice = 'Укажите стоимость ЖКХ'
     }
-    if (photos.length < 5) e.photos = 'Загрузите минимум 5 фото'
+    const totalPhotos = newPhotos.length + (isEdit ? existingPhotos.length : 0)
+    if (totalPhotos < 5) {
+      e.photos = isEdit
+        ? 'Должно быть не менее 5 фото (включая уже загруженные). Добавьте новые фото.'
+        : 'Загрузите минимум 5 фото'
+    }
     return e
-  }, [form, photos.length])
+  }, [form, newPhotos.length, isEdit, existingPhotos.length])
 
   const canSubmit = Object.keys(errors).length === 0
 
@@ -157,11 +289,25 @@ export function NewPropertyPage() {
     const list = Array.from(e.target.files ?? [])
     if (!list.length) return
 
-    const nextFiles = [...photos, ...list]
-    const nextPreviews = [...photoPreviews, ...list.map((f) => URL.createObjectURL(f))]
-    setPhotos(nextFiles)
-    setPhotoPreviews(nextPreviews)
+    const nextFiles = [...newPhotos, ...list]
+    const nextPreviews = [...newPhotoPreviews, ...list.map((f) => URL.createObjectURL(f))]
+    setNewPhotos(nextFiles)
+    setNewPhotoPreviews(nextPreviews)
     e.target.value = ''
+  }
+
+  const removeExistingPhoto = (pathToRemove: string) => {
+    const normalized = normalizePhotoPathForStorage(pathToRemove)
+    setExistingPhotos((prev) => prev.filter((p) => normalizePhotoPathForStorage(p) !== normalized))
+  }
+
+  const removeNewPhoto = (index: number) => {
+    setNewPhotoPreviews((prev) => {
+      const url = prev[index]
+      if (url) URL.revokeObjectURL(url)
+      return prev.filter((_, i) => i !== index)
+    })
+    setNewPhotos((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -187,42 +333,94 @@ export function NewPropertyPage() {
     setSubmitLoading(true)
 
     const base = getApiBase()
-    const url = base ? `${base}/api/properties` : '/api/properties'
+    const url = isEdit && editId
+      ? getProfileUrl(`/api/properties/${encodeURIComponent(editId)}`)
+      : base
+        ? `${base}/api/properties`
+        : '/api/properties'
     const token = localStorage.getItem('token')
 
     const formData = new FormData()
 
-    Object.entries(form).forEach(([key, value]) => {
-      if (typeof value === 'boolean') {
-        formData.append(key, value ? 'true' : 'false')
-      } else if (value !== '') {
-        formData.append(key, value as string)
-      }
-    })
+    if (isEdit && editId) {
+      appendPatchFormData(formData, form)
+      const existingPhotosToKeep = existingPhotos.map((p) => normalizePhotoPathForStorage(p))
 
-    photos.forEach((file, index) => {
-      formData.append('photos', file, file.name || `photo-${index + 1}.jpg`)
-    })
+      console.log('[PATCH property photos]', {
+        existingPhotos: existingPhotosToKeep,
+        newPhotosCount: newPhotos.length,
+        propertyId: editId,
+      })
+
+      formData.append('existingPhotos', JSON.stringify(existingPhotosToKeep))
+      newPhotos.forEach((file, index) => {
+        formData.append('photos', file, file.name || `photo-${index + 1}.jpg`)
+      })
+    } else {
+      Object.entries(form).forEach(([key, value]) => {
+        if (typeof value === 'boolean') {
+          formData.append(key, value ? 'true' : 'false')
+        } else if (value !== '') {
+          formData.append(key, value as string)
+        }
+      })
+
+      newPhotos.forEach((file, index) => {
+        formData.append('photos', file, file.name || `photo-${index + 1}.jpg`)
+      })
+    }
 
     fetch(url, {
-      method: 'POST',
+      method: isEdit ? 'PATCH' : 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
     })
       .then(async (res) => {
+        if (res.status === 403) {
+          throw new Error('Нет прав на редактирование этого объявления.')
+        }
         if (!res.ok) {
           const text = await res.text().catch(() => '')
-          throw new Error(text || `Ошибка создания объявления: ${res.status}`)
+          throw new Error(
+            text || (isEdit ? `Ошибка сохранения: ${res.status}` : `Ошибка создания объявления: ${res.status}`),
+          )
         }
         return res.json().catch(() => null)
       })
-      .then((data) => {
+      .then(async (data) => {
+        if (isEdit && editId) {
+          const previewsToRevoke = [...newPhotoPreviews]
+          let raw: unknown = data
+          let photoPayload = extractPhotosContainer(raw)
+          if (!photoPayload) {
+            const r = await fetch(
+              getProfileUrl(`/api/properties/${encodeURIComponent(editId)}`),
+              { headers: getAuthHeaders() },
+            )
+            if (r.ok) {
+              raw = await r.json()
+              photoPayload = extractPhotosContainer(raw)
+            }
+          }
+          if (photoPayload) {
+            const next = parseAndNormalizePhotosFromPayload(photoPayload)
+            setExistingPhotos(next)
+          }
+          previewsToRevoke.forEach((u) => URL.revokeObjectURL(u))
+          setNewPhotos([])
+          setNewPhotoPreviews([])
+          setSubmitSuccess('Объявление успешно сохранено.')
+          navigate(`/properties/${encodeURIComponent(editId)}`, {
+            state: { flashSuccess: 'Объявление успешно сохранено' },
+          })
+          return
+        }
         setSubmitSuccess('Объявление успешно отправлено на модерацию.')
         setForm(initialState)
         setTouched({})
-        setPhotos([])
-        photoPreviews.forEach((u) => URL.revokeObjectURL(u))
-        setPhotoPreviews([])
+        setNewPhotos([])
+        newPhotoPreviews.forEach((u) => URL.revokeObjectURL(u))
+        setNewPhotoPreviews([])
 
         const id = data?.id ?? data?._id
         if (id) {
@@ -232,17 +430,51 @@ export function NewPropertyPage() {
         }
       })
       .catch((err) => {
-        setSubmitError(err instanceof Error ? err.message : 'Не удалось создать объявление')
+        setSubmitError(
+          err instanceof Error ? err.message : isEdit ? 'Не удалось сохранить объявление' : 'Не удалось создать объявление',
+        )
       })
       .finally(() => {
         setSubmitLoading(false)
       })
   }
 
+  if (isEdit && propertyLoading) {
+    return (
+      <div className={styles.root}>
+        <div className={styles.inner}>
+          <p className={styles.pageLoading}>Загрузка объявления…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isEdit && propertyLoadError) {
+    return (
+      <div className={styles.root}>
+        <div className={styles.inner}>
+          <h1 className={styles.title}>Редактирование</h1>
+          <p className={styles.pageError}>{propertyLoadError}</p>
+          <div className={styles.errorActions}>
+            {loadForbidden ? (
+              <Link to="/profile/properties" className={styles.errorLink}>
+                Перейти в «Мои объекты»
+              </Link>
+            ) : (
+              <Link to="/catalog" className={styles.errorLink}>
+                В каталог
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.inner}>
-        <h1 className={styles.title}>Новое объявление</h1>
+        <h1 className={styles.title}>{isEdit ? 'Редактирование объявления' : 'Новое объявление'}</h1>
 
         <form onSubmit={handleSubmit}>
           <section className={styles.card}>
@@ -656,8 +888,40 @@ export function NewPropertyPage() {
             <h2 className={styles.sectionTitle}>Фото и планировка</h2>
 
             <div className={styles.photosBox}>
+              {isEdit && existingPhotos.length > 0 && (
+                <div className={styles.existingPhotos} aria-label="Текущие фото">
+                  <p className={styles.existingPhotosLabel}>Текущие фото ({existingPhotos.length})</p>
+                  <div className={styles.previews}>
+                    {existingPhotos.map((path, idx) => (
+                      <div key={`${path}-${idx}`} className={styles.preview}>
+                        <img
+                          src={resolvePhotoUrlForForm(path)}
+                          alt=""
+                          className={styles.previewImg}
+                        />
+                        <button
+                          type="button"
+                          className={styles.previewRemove}
+                          aria-label="Удалить фото"
+                          onClick={() => removeExistingPhoto(path)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className={styles.photosTop}>
-                <p className={styles.photosCount}>Загружено файлов: {photos.length}</p>
+                <p className={styles.photosCount}>
+                  Новых файлов: {newPhotos.length}
+                  {isEdit && existingPhotos.length > 0 && (
+                    <span className={styles.photosCountHint}>
+                      {' '}
+                      · всего: {existingPhotos.length + newPhotos.length}
+                    </span>
+                  )}
+                </p>
                 <button type="button" className={styles.fileButton} onClick={handlePickFiles}>
                   Выберите файл
                 </button>
@@ -676,11 +940,19 @@ export function NewPropertyPage() {
                 Не добавляйте чужие фото, картинки с водяными знаками и рекламу.
               </p>
 
-              {photoPreviews.length > 0 && (
+              {newPhotoPreviews.length > 0 && (
                 <div className={styles.previews} aria-label="Превью загруженных фото">
-                  {photoPreviews.map((src, idx) => (
+                  {newPhotoPreviews.map((src, idx) => (
                     <div key={src + idx} className={styles.preview}>
                       <img src={src} alt="" className={styles.previewImg} />
+                      <button
+                        type="button"
+                        className={styles.previewRemove}
+                        aria-label="Убрать из загрузки"
+                        onClick={() => removeNewPhoto(idx)}
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -694,12 +966,14 @@ export function NewPropertyPage() {
             <h2 className={styles.sectionTitle}>Публикация</h2>
             <div className={styles.actions}>
               <button type="submit" className={styles.submit} disabled={!canSubmit || submitLoading}>
-                {submitLoading ? 'Отправка…' : 'Опубликовать'}
+                {submitLoading ? (isEdit ? 'Сохранение…' : 'Отправка…') : isEdit ? 'Сохранить' : 'Опубликовать'}
               </button>
             </div>
             {!canSubmit && (
               <p className={styles.help}>
-                Заполните обязательные поля и загрузите минимум 5 фото, чтобы отправить форму.
+                {isEdit
+                  ? 'Заполните обязательные поля. Всего должно быть не менее 5 фото (уже загруженные и новые).'
+                  : 'Заполните обязательные поля и загрузите минимум 5 фото, чтобы отправить форму.'}
               </p>
             )}
             {submitSuccess && <p className={styles.help}>{submitSuccess}</p>}

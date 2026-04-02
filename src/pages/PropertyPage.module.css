@@ -103,6 +103,53 @@
   color: #374151;
 }
 
+.saveFlash {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(74, 67, 236, 0.1);
+  border: 1px solid rgba(74, 67, 236, 0.25);
+  color: #1e1b4b;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.saveFlashActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.saveFlashLink {
+  color: #4a43ec;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.saveFlashLink:hover {
+  text-decoration: underline;
+}
+
+.saveFlashDismiss {
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.saveFlashDismiss:hover {
+  background: #f9fafb;
+}
+
 .pageGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);

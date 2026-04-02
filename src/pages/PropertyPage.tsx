@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Heart, MessageCircle } from 'lucide-react'
 import { getApiBase, getAuthHeaders } from '../services/api'
 import {
@@ -149,6 +149,7 @@ const OPEN_AUTH_EVENT = 'rentora:open-auth'
 export function PropertyPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const [property, setProperty] = useState<Property | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -157,11 +158,20 @@ export function PropertyPage() {
   const [brokenPhotos, setBrokenPhotos] = useState<Record<number, boolean>>({})
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoriteBusy, setFavoriteBusy] = useState(false)
+  const [saveFlash, setSaveFlash] = useState<string | null>(null)
 
   useEffect(() => {
     setActivePhoto(0)
     setBrokenPhotos({})
+    setSaveFlash(null)
   }, [id])
+
+  useEffect(() => {
+    const msg = (location.state as { flashSuccess?: string } | null)?.flashSuccess
+    if (!msg) return
+    setSaveFlash(msg)
+    navigate(location.pathname + location.search, { replace: true, state: {} })
+  }, [location.pathname, location.search, location.state, navigate])
 
   useEffect(() => {
     if (!id) {
@@ -341,6 +351,20 @@ export function PropertyPage() {
           <span className={styles.breadcrumbSep}>/</span>
           <span className={styles.breadcrumbCurrent}>{property.title || 'Объявление'}</span>
         </nav>
+
+        {saveFlash && (
+          <div className={styles.saveFlash} role="status">
+            <span>{saveFlash}</span>
+            <div className={styles.saveFlashActions}>
+              <Link to="/profile/properties" className={styles.saveFlashLink}>
+                Мои объекты
+              </Link>
+              <button type="button" className={styles.saveFlashDismiss} onClick={() => setSaveFlash(null)}>
+                Закрыть
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className={styles.pageGrid}>
           <section className={styles.gallerySlot} aria-label="Галерея">
