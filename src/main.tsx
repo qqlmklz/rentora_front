@@ -10,6 +10,7 @@ import { CatalogPage } from './pages/CatalogPage'
 import { PropertyPage } from './pages/PropertyPage'
 import { NewPropertyPage } from './pages/NewPropertyPage'
 import { ProfilePropertiesPage } from './pages/ProfilePropertiesPage'
+import { ChatsPage } from './pages/ChatsPage'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -24,6 +25,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/profile" element={<MainLayout><ProfilePage /></MainLayout>} />
         <Route path="/profile/favorites" element={<MainLayout><ProfileFavoritesPage /></MainLayout>} />
         <Route path="/profile/properties" element={<MainLayout><ProfilePropertiesPage /></MainLayout>} />
+        <Route path="/chats" element={<MainLayout><ChatsPage /></MainLayout>} />
+        <Route path="/chats/:chatId" element={<MainLayout><ChatsPage /></MainLayout>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

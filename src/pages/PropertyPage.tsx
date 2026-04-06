@@ -9,6 +9,7 @@ import {
   FAVORITES_CHANGED_EVENT,
   isFavoritePropertyId,
 } from '../services/favoritesApi'
+import { getOrCreateChatForProperty } from '../services/chatsApi'
 import styles from './PropertyPage.module.css'
 
 type Property = {
@@ -158,6 +159,8 @@ export function PropertyPage() {
   const [brokenPhotos, setBrokenPhotos] = useState<Record<number, boolean>>({})
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoriteBusy, setFavoriteBusy] = useState(false)
+  const [writeBusy, setWriteBusy] = useState(false)
+  const [writeError, setWriteError] = useState<string | null>(null)
   const [saveFlash, setSaveFlash] = useState<string | null>(null)
 
   useEffect(() => {
@@ -246,8 +249,27 @@ export function PropertyPage() {
     }
   }, [property?.id])
 
-  const handleWriteClick = () => {
-    // TODO: открыть чат с владельцем объявления (когда будет API / маршрут чата)
+  const handleWriteClick = async () => {
+    if (!property) return
+    if (!localStorage.getItem('token')) {
+      window.dispatchEvent(new CustomEvent(OPEN_AUTH_EVENT))
+      return
+    }
+    setWriteError(null)
+    setWriteBusy(true)
+    try {
+      const { chatId, raw } = await getOrCreateChatForProperty(property.id)
+      console.log('[Написать → чат]', {
+        propertyId: property.id,
+        response: raw,
+        chatId,
+      })
+      navigate(`/chats/${encodeURIComponent(chatId)}`)
+    } catch (e) {
+      setWriteError(e instanceof Error ? e.message : 'Не удалось открыть чат')
+    } finally {
+      setWriteBusy(false)
+    }
   }
 
   const handleFavoriteToggle = async () => {
@@ -458,7 +480,13 @@ export function PropertyPage() {
                 {price && <p className={styles.sidebarPrice}>{price}</p>}
 
                 <div className={styles.actionRow}>
-                  <button type="button" className={styles.btnPrimary} onClick={handleWriteClick}>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    onClick={handleWriteClick}
+                    disabled={writeBusy}
+                    aria-busy={writeBusy}
+                  >
                     <MessageCircle size={18} strokeWidth={2} aria-hidden />
                     Написать
                   </button>
@@ -480,6 +508,12 @@ export function PropertyPage() {
                     {isFavorite ? 'В избранном' : 'В избранное'}
                   </button>
                 </div>
+
+                {writeError && (
+                  <p className={styles.sidebarWriteError} role="alert">
+                    {writeError}
+                  </p>
+                )}
 
                 <div className={styles.sidebarDivider} />
 

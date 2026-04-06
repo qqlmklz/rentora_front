@@ -213,6 +213,13 @@
   justify-content: center;
 }
 
+.sidebarWriteError {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #dc2626;
+  line-height: 1.4;
+}
+
 .sidebarDivider {
   height: 1px;
   margin: 20px 0 18px;

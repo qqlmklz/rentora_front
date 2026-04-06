@@ -30,6 +30,7 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
   }, [dropdownOpen])
 
   const handleLogout = () => {
+    window.dispatchEvent(new CustomEvent('rentora:logout'))
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setDropdownOpen(false)
@@ -61,13 +62,9 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
         </nav>
 
         <div className={styles.right}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Сообщения"
-          >
+          <Link to="/chats" className={styles.iconButton} aria-label="Сообщения">
             <MessageCircle size={20} />
-          </button>
+          </Link>
           {user ? (
             <Link to="/profile/favorites" className={styles.iconButton} aria-label="Избранное">
               <Heart size={20} />
