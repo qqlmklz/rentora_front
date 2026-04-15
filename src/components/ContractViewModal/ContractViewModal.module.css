@@ -1,0 +1,193 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 720px;
+  max-height: min(92vh, 880px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.dialogHeader {
+  flex-shrink: 0;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.docTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.inlineError {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid #fecaca;
+}
+
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.loading {
+  margin: 0;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 15px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.emptyHint {
+  margin: 0;
+  padding: 16px 0;
+  font-size: 15px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.document {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.section {
+  margin: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #334155;
+  line-height: 1.3;
+}
+
+.sectionRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(160px, 42%) 1fr;
+  gap: 12px 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowLabel {
+  color: #475569;
+  font-weight: 500;
+}
+
+.rowValue {
+  color: #0f172a;
+  font-weight: 400;
+  word-break: break-word;
+}
+
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fafafa;
+}
+
+.btnClose {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btnClose:hover {
+  background: #f1f5f9;
+}
+
+.btnAccept {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  background: #4a43ec;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btnAccept:hover:not(:disabled) {
+  background: #3d36d4;
+}
+
+.btnAccept:disabled,
+.btnReject:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btnReject {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  background: #ffffff;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btnReject:hover:not(:disabled) {
+  background: #f8fafc;
+}

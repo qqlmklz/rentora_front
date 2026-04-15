@@ -46,9 +46,9 @@ const sidebar = (
     <a href="/profile/requests" className={styles.sidebarLink}>
       Заявки
     </a>
-    <a href="/profile/documents" className={styles.sidebarLink}>
+    <Link to="/profile/documents" className={styles.sidebarLink}>
       Документы
-    </a>
+    </Link>
     <a href="/profile/settings" className={styles.sidebarLink}>
       Настройки
     </a>

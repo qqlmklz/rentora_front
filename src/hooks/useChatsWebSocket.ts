@@ -20,7 +20,8 @@ function parseWsPayload(raw: string): ChatsWsNewMessagePayload | null {
   }
   if (!data || typeof data !== 'object') return null
   const o = data as Record<string, unknown>
-  if (o.type !== 'new_message') return null
+  const evt = String(o.type ?? '').toLowerCase()
+  if (evt !== 'new_message' && evt !== 'new_contract_message') return null
   const chatId = o.chatId ?? o.chat_id
   if (chatId == null || String(chatId).trim() === '') return null
   const rawMsg = o.message ?? o.payload ?? o.data

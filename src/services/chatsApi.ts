@@ -1,4 +1,6 @@
 import { getApiBase, getAuthHeaders, getProfileUrl } from './api'
+import type { ChatContract } from './contractsApi'
+import { normalizeChatContract } from './contractsApi'
 
 /** WebSocket чатов: тот же хост, что и API; `ws` / `wss` по схеме API */
 export function getChatsWebSocketUrl(): string {
@@ -38,16 +40,36 @@ export type ChatListItem = {
   lastMessage: string
   lastMessageAt: string | null
   unreadCount: number
+  /** Текущий пользователь — владелец объявления (арендодатель) в этом чате */
+  isLandlord: boolean
 }
 
-export type ChatMessage = {
-  id: string
-  body: string
-  isMine: boolean
-  createdAt: string
+/** Сообщение чата: `type` совпадает с полем API `message.type` */
+export type ChatMessage =
+  | {
+      id: string
+      type: 'text'
+      body: string
+      isMine: boolean
+      createdAt: string
+    }
+  | {
+      id: string
+      type: 'contract'
+      /** id договора для GET/PATCH /api/contracts/:contractId — только с поля сообщения */
+      contractId: string
+      body: string
+      isMine: boolean
+      createdAt: string
+      contract: ChatContract
+    }
+
+/** Подпись для превью в списке диалогов и WebSocket */
+export function messagePreviewText(m: ChatMessage): string {
+  return m.type === 'contract' ? 'Договор' : m.body
 }
 
-function getCurrentUserId(): string | null {
+export function getCurrentUserId(): string | null {
   try {
     const raw = localStorage.getItem('user')
     if (!raw) return null
@@ -84,7 +106,11 @@ function normalizeChatListItem(raw: unknown): ChatListItem | null {
       ? r.lastMessage
       : typeof r.last_message === 'string'
         ? r.last_message
-        : String(last.text ?? last.body ?? r.lastMessagePreview ?? r.last_message_preview ?? '')
+        : (() => {
+            const t = String(last.type ?? last.messageType ?? last.message_type ?? '').toLowerCase()
+            if (t === 'contract') return 'Договор'
+            return String(last.text ?? last.body ?? r.lastMessagePreview ?? r.last_message_preview ?? '')
+          })()
 
   const lastMessageAt =
     (typeof r.lastMessageAt === 'string' ? r.lastMessageAt : null) ??
@@ -117,6 +143,20 @@ function normalizeChatListItem(raw: unknown): ChatListItem | null {
     peer.avatar_url ??
     peer.avatar
 
+  const myId = getCurrentUserId()
+  /** Владелец объявления, к которому привязан чат (арендодатель) */
+  const propertyOwnerId =
+    property.ownerId ??
+    property.owner_id ??
+    property.userId ??
+    property.user_id ??
+    r.propertyOwnerId ??
+    r.property_owner_id
+  const isLandlord =
+    myId != null &&
+    propertyOwnerId != null &&
+    String(propertyOwnerId) === String(myId)
+
   return {
     id: String(id),
     propertyTitle: String(property.title ?? r.propertyTitle ?? r.property_title ?? 'Объявление'),
@@ -125,6 +165,7 @@ function normalizeChatListItem(raw: unknown): ChatListItem | null {
     lastMessage: lastMessageText,
     lastMessageAt,
     unreadCount,
+    isLandlord,
   }
 }
 
@@ -141,6 +182,59 @@ export async function fetchChats(): Promise<ChatListItem[]> {
         ? ((data as { chats: unknown[] }).chats ?? [])
         : []
   return list.map(normalizeChatListItem).filter(Boolean) as ChatListItem[]
+}
+
+/** Данные одного чата (GET /api/chats/:id) — для шапки и договора, не из списка */
+export type OpenChatDetail = {
+  id: string
+  propertyOwnerId: string | null
+  chat: Record<string, unknown>
+}
+
+export function normalizeOpenChatPayload(raw: unknown): OpenChatDetail | null {
+  if (!raw || typeof raw !== 'object') return null
+  const r = raw as Record<string, unknown>
+  const id = r.id ?? r._id ?? r.chatId
+  if (id == null) return null
+  const property = (r.property ?? r.listing ?? {}) as Record<string, unknown>
+  let propertyOwnerId: string | null = null
+  if (r.propertyOwnerId != null && String(r.propertyOwnerId).trim() !== '') {
+    propertyOwnerId = String(r.propertyOwnerId)
+  } else if (r.property_owner_id != null && String(r.property_owner_id).trim() !== '') {
+    propertyOwnerId = String(r.property_owner_id)
+  } else if (property.ownerId != null && String(property.ownerId).trim() !== '') {
+    propertyOwnerId = String(property.ownerId)
+  } else if (property.owner_id != null && String(property.owner_id).trim() !== '') {
+    propertyOwnerId = String(property.owner_id)
+  } else if (property.userId != null && String(property.userId).trim() !== '') {
+    propertyOwnerId = String(property.userId)
+  } else if (property.user_id != null && String(property.user_id).trim() !== '') {
+    propertyOwnerId = String(property.user_id)
+  }
+  return {
+    id: String(id),
+    propertyOwnerId,
+    chat: r,
+  }
+}
+
+/** GET /api/chats/:chatId — открытый чат */
+export async function fetchOpenChat(chatId: string): Promise<OpenChatDetail> {
+  const url = getProfileUrl(`/api/chats/${encodeURIComponent(chatId)}`)
+  const res = await fetch(url, { headers: getAuthHeaders() })
+  if (!res.ok) throw new Error(await res.text().catch(() => `Чат: ${res.status}`))
+  const data = await res.json()
+  const payload =
+    data &&
+    typeof data === 'object' &&
+    'chat' in (data as object) &&
+    (data as { chat?: unknown }).chat != null &&
+    typeof (data as { chat?: unknown }).chat === 'object'
+      ? (data as { chat: unknown }).chat
+      : data
+  const normalized = normalizeOpenChatPayload(payload)
+  if (!normalized) throw new Error('Некорректный ответ чата')
+  return normalized
 }
 
 /** PATCH /api/chats/:id/read — отметить чат прочитанным */
@@ -203,11 +297,60 @@ function normalizeMessage(raw: unknown, myUserId: string | null): ChatMessage | 
     mineFromApi ||
     (myUserId != null && senderId != null && String(senderId) === String(myUserId))
 
+  const createdAt = String(r.createdAt ?? r.created_at ?? new Date().toISOString())
+  const typeRaw = String(r.type ?? r.messageType ?? r.message_type ?? '').toLowerCase()
+  const isContractType = typeRaw === 'contract'
+  const hasContractField = r.contract != null && typeof r.contract === 'object'
+
+  let contractRaw: unknown =
+    r.contract ??
+    (typeof r.payload === 'object' && r.payload != null
+      ? (r.payload as Record<string, unknown>).contract
+      : undefined) ??
+    (isContractType || hasContractField ? (r.payload ?? r.data) : undefined)
+
+  if (contractRaw && typeof contractRaw === 'object') {
+    const cr = contractRaw as Record<string, unknown>
+    if (cr.contract != null && typeof cr.contract === 'object') contractRaw = cr.contract
+  }
+
+  const wantsContract = isContractType || hasContractField
+  let contract: ChatContract | null = null
+  if (wantsContract) {
+    contract = normalizeChatContract(contractRaw)
+    if (!contract && isContractType) contract = normalizeChatContract(r)
+    if (!contract && hasContractField) contract = normalizeChatContract(r.contract)
+  }
+
+  if (contract && wantsContract) {
+    const nested =
+      r.contract != null && typeof r.contract === 'object'
+        ? (r.contract as Record<string, unknown>)
+        : null
+    const messageContractId = String(
+      r.contractId ?? r.contract_id ?? nested?.contractId ?? nested?.contract_id ?? '',
+    ).trim()
+    if (messageContractId) {
+      contract = { ...contract, id: messageContractId }
+    }
+    const preview = String(r.text ?? r.preview ?? r.body ?? 'Договор')
+    return {
+      id: String(id),
+      type: 'contract',
+      contractId: messageContractId,
+      body: preview,
+      isMine: mine,
+      createdAt,
+      contract,
+    }
+  }
+
   return {
     id: String(id),
+    type: 'text',
     body: String(r.text ?? r.body ?? r.content ?? ''),
     isMine: mine,
-    createdAt: String(r.createdAt ?? r.created_at ?? new Date().toISOString()),
+    createdAt,
   }
 }
 

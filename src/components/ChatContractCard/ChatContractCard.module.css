@@ -1,0 +1,81 @@
+.card {
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f0f4ff;
+  border: 1px solid rgba(74, 67, 236, 0.2);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.35;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(74, 67, 236, 0.15);
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btnOpen {
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 67, 236, 0.35);
+  background: #fff;
+  color: #4a43ec;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnAccept {
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: none;
+  background: #4a43ec;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnAccept:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btnReject {
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  background: #fff;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnReject:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
