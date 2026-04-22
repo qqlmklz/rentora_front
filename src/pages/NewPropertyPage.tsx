@@ -138,8 +138,13 @@ function extractPhotosContainer(raw: unknown): Record<string, unknown> | null {
   )
 }
 
+function shouldSkipResidentialCondition(key: string, category: Category): boolean {
+  return category === 'commercial' && (key === 'allowChildren' || key === 'allowPets')
+}
+
 function appendPatchFormData(fd: FormData, form: FormState) {
   PATCH_FORM_KEYS.forEach((key) => {
+    if (shouldSkipResidentialCondition(key, form.category)) return
     const value = form[key]
     if (typeof value === 'boolean') {
       fd.append(key, value ? 'true' : 'false')
@@ -273,7 +278,11 @@ export function NewPropertyPage() {
         const next: FormState = { ...prev, category: value as Category, subcategory: '' }
         if (value === 'commercial') {
           next.rooms = ''
+          next.livingArea = ''
+          next.kitchenArea = ''
           next.residentialType = ''
+          next.allowChildren = false
+          next.allowPets = false
         }
         return next
       }
@@ -358,6 +367,7 @@ export function NewPropertyPage() {
       })
     } else {
       Object.entries(form).forEach(([key, value]) => {
+        if (shouldSkipResidentialCondition(key, form.category)) return
         if (typeof value === 'boolean') {
           formData.append(key, value ? 'true' : 'false')
         } else if (value !== '') {
@@ -638,27 +648,30 @@ export function NewPropertyPage() {
           </section>
 
           <section className={styles.card}>
-            <h2 className={styles.sectionTitle}>Параметры квартиры</h2>
+            <h2 className={styles.sectionTitle}>
+              {form.category === 'commercial' ? 'Параметры' : 'Параметры квартиры'}
+            </h2>
             <div className={styles.grid}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="rooms">
-                  Количество комнат
-                </label>
-                <select
-                  id="rooms"
-                  className={styles.select}
-                  value={form.rooms}
-                  onChange={(e) => setField('rooms', e.target.value)}
-                  disabled={form.category === 'commercial'}
-                >
-                  <option value="">—</option>
-                  {ROOMS_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {form.category !== 'commercial' && (
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="rooms">
+                    Количество комнат
+                  </label>
+                  <select
+                    id="rooms"
+                    className={styles.select}
+                    value={form.rooms}
+                    onChange={(e) => setField('rooms', e.target.value)}
+                  >
+                    <option value="">—</option>
+                    {ROOMS_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="totalArea">
@@ -675,35 +688,39 @@ export function NewPropertyPage() {
                 />
               </div>
 
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="livingArea">
-                  Жилая площадь, м²
-                </label>
-                <input
-                  id="livingArea"
-                  type="number"
-                  min={0}
-                  className={styles.input}
-                  value={form.livingArea}
-                  onChange={(e) => setField('livingArea', e.target.value)}
-                  placeholder="Например, 28"
-                />
-              </div>
+              {form.category !== 'commercial' && (
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="livingArea">
+                    Жилая площадь, м²
+                  </label>
+                  <input
+                    id="livingArea"
+                    type="number"
+                    min={0}
+                    className={styles.input}
+                    value={form.livingArea}
+                    onChange={(e) => setField('livingArea', e.target.value)}
+                    placeholder="Например, 28"
+                  />
+                </div>
+              )}
 
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="kitchenArea">
-                  Кухня, м²
-                </label>
-                <input
-                  id="kitchenArea"
-                  type="number"
-                  min={0}
-                  className={styles.input}
-                  value={form.kitchenArea}
-                  onChange={(e) => setField('kitchenArea', e.target.value)}
-                  placeholder="Например, 10"
-                />
-              </div>
+              {form.category !== 'commercial' && (
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="kitchenArea">
+                    Кухня, м²
+                  </label>
+                  <input
+                    id="kitchenArea"
+                    type="number"
+                    min={0}
+                    className={styles.input}
+                    value={form.kitchenArea}
+                    onChange={(e) => setField('kitchenArea', e.target.value)}
+                    placeholder="Например, 10"
+                  />
+                </div>
+              )}
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="floor">
@@ -860,27 +877,29 @@ export function NewPropertyPage() {
                 </select>
               </div>
 
-              <div className={styles.field}>
-                <span className={styles.label}>Условия проживания</span>
-                <div className={styles.checkboxRow}>
-                  <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      checked={form.allowChildren}
-                      onChange={(e) => setField('allowChildren', e.target.checked)}
-                    />
-                    <span>Можно с детьми</span>
-                  </label>
-                  <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      checked={form.allowPets}
-                      onChange={(e) => setField('allowPets', e.target.checked)}
-                    />
-                    <span>Можно с животными</span>
-                  </label>
+              {form.category !== 'commercial' && (
+                <div className={styles.field}>
+                  <span className={styles.label}>Условия проживания</span>
+                  <div className={styles.checkboxRow}>
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={form.allowChildren}
+                        onChange={(e) => setField('allowChildren', e.target.checked)}
+                      />
+                      <span>Можно с детьми</span>
+                    </label>
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={form.allowPets}
+                        onChange={(e) => setField('allowPets', e.target.checked)}
+                      />
+                      <span>Можно с животными</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </section>
 

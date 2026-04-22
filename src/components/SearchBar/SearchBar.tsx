@@ -1,4 +1,5 @@
 import { type FC, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import styles from './searchBar.module.css'
 
@@ -48,6 +49,7 @@ const initialFilters: SearchFilters = {
 }
 
 export const SearchBar: FC = () => {
+  const navigate = useNavigate()
   const [filters, setFilters] = useState<SearchFilters>(initialFilters)
 
   const propertyTypes = filters.category === 'residential' ? RESIDENTIAL_TYPES : filters.category === 'commercial' ? COMMERCIAL_TYPES : []
@@ -66,7 +68,26 @@ export const SearchBar: FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Search filters:', filters)
+    const params = new URLSearchParams()
+    const keys: Array<keyof SearchFilters> = [
+      'category',
+      'propertyType',
+      'rooms',
+      'priceFrom',
+      'priceTo',
+      'location',
+    ]
+
+    keys.forEach((key) => {
+      const value = filters[key].trim()
+      if (!value) return
+      params.set(key, value)
+    })
+
+    const query = params.toString()
+    const targetUrl = query ? `/catalog?${query}` : '/catalog'
+    console.log('[SearchBar] navigate to:', targetUrl)
+    navigate(targetUrl)
   }
 
   return (

@@ -50,9 +50,9 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
           <Link to="/catalog" className={`${styles.navItem} ${styles.navItemActive}`}>
             Каталог
           </Link>
-          <button type="button" className={styles.navItem}>
+          <Link to="/catalog?category=commercial" className={styles.navItem}>
             Коммерческая
-          </button>
+          </Link>
           <button type="button" className={styles.navItem}>
             Услуги
           </button>

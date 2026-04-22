@@ -14,11 +14,11 @@ const PROPERTY_TYPE_OPTIONS = [
   { value: 'apartment', label: 'Квартира' },
   { value: 'room', label: 'Комната' },
   { value: 'house', label: 'Дом' },
-  { value: 'studio', label: 'Студия' },
-  { value: 'warehouse', label: 'Склад' },
+  { value: 'cottage', label: 'Коттедж' },
   { value: 'office', label: 'Офис' },
   { value: 'coworking', label: 'Коворкинг' },
-  { value: 'space', label: 'Помещение' },
+  { value: 'building', label: 'Здание' },
+  { value: 'warehouse', label: 'Склад' },
 ]
 
 const ROOMS_OPTIONS = [
@@ -38,15 +38,81 @@ const SORT_OPTIONS = [
   { value: 'expensive', label: 'Сначала дорогие' },
 ]
 
+const CATEGORY_ALIASES: Record<string, string> = {
+  жилое: 'residential',
+  коммерция: 'commercial',
+}
+
+const PROPERTY_TYPE_ALIASES: Record<string, string> = {
+  квартира: 'apartment',
+  комната: 'room',
+  дом: 'house',
+  коттедж: 'cottage',
+  офис: 'office',
+  коворкинг: 'coworking',
+  здание: 'building',
+  склад: 'warehouse',
+}
+
+const ROOMS_ALIASES: Record<string, string> = {
+  студия: 'studio',
+}
+
+const SORT_ALIASES: Record<string, string> = {
+  'сначала новые': 'newest',
+  'сначала дешёвые': 'cheapest',
+  'сначала дорогие': 'expensive',
+}
+
+const CATEGORY_VALUES = new Set(CATEGORY_OPTIONS.map((option) => option.value).filter(Boolean))
+const PROPERTY_TYPE_VALUES = new Set(PROPERTY_TYPE_OPTIONS.map((option) => option.value).filter(Boolean))
+const ROOMS_VALUES = new Set(ROOMS_OPTIONS.map((option) => option.value).filter(Boolean))
+const SORT_VALUES = new Set(SORT_OPTIONS.map((option) => option.value))
+
+const PROPERTY_TYPES_BY_CATEGORY: Record<'residential' | 'commercial', string[]> = {
+  residential: ['apartment', 'room', 'house', 'cottage'],
+  commercial: ['office', 'coworking', 'building', 'warehouse'],
+}
+
+function normalizeByAliases(value: string | null, aliases: Record<string, string>): string {
+  const raw = (value ?? '').trim()
+  if (!raw) return ''
+  return aliases[raw.toLowerCase()] ?? raw
+}
+
+function normalizeOptionValue(
+  value: string | null,
+  aliases: Record<string, string>,
+  allowedValues: Set<string>,
+  fallback = '',
+): string {
+  const normalized = normalizeByAliases(value, aliases)
+  if (!normalized) return fallback
+  return allowedValues.has(normalized) ? normalized : fallback
+}
+
+function isPropertyTypeValidForCategory(category: string, propertyType: string): boolean {
+  if (!propertyType) return true
+  if (category !== 'residential' && category !== 'commercial') return PROPERTY_TYPE_VALUES.has(propertyType)
+  return PROPERTY_TYPES_BY_CATEGORY[category].includes(propertyType)
+}
+
 function filtersFromSearchParams(params: URLSearchParams): CatalogFilters {
+  const category = normalizeOptionValue(params.get('category'), CATEGORY_ALIASES, CATEGORY_VALUES)
+  const propertyType = normalizeOptionValue(
+    params.get('propertyType'),
+    PROPERTY_TYPE_ALIASES,
+    PROPERTY_TYPE_VALUES,
+  )
+  const rooms = normalizeOptionValue(params.get('rooms'), ROOMS_ALIASES, ROOMS_VALUES)
   return {
-    category: params.get('category') ?? '',
-    propertyType: params.get('propertyType') ?? '',
-    rooms: params.get('rooms') ?? '',
-    priceFrom: params.get('priceFrom') ?? '',
-    priceTo: params.get('priceTo') ?? '',
-    location: params.get('location') ?? '',
-    sort: params.get('sort') ?? 'newest',
+    category,
+    propertyType: isPropertyTypeValidForCategory(category, propertyType) ? propertyType : '',
+    rooms: category === 'commercial' ? '' : rooms,
+    priceFrom: (params.get('priceFrom') ?? '').trim(),
+    priceTo: (params.get('priceTo') ?? '').trim(),
+    location: (params.get('location') ?? '').trim(),
+    sort: normalizeOptionValue(params.get('sort'), SORT_ALIASES, SORT_VALUES, 'newest'),
   }
 }
 
@@ -90,12 +156,61 @@ export function CatalogPage() {
   const [brokenPhotos, setBrokenPhotos] = useState<Record<string, boolean>>({})
 
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams])
+  const propertyTypeOptions = useMemo(() => {
+    if (filters.category === 'residential' || filters.category === 'commercial') {
+      const allowed = new Set(PROPERTY_TYPES_BY_CATEGORY[filters.category])
+      return PROPERTY_TYPE_OPTIONS.filter((option) => !option.value || allowed.has(option.value))
+    }
+    return PROPERTY_TYPE_OPTIONS
+  }, [filters.category])
+  const requestFilters = useMemo(() => {
+    const next: CatalogFilters = { ...filters }
+    if (!isPropertyTypeValidForCategory(filters.category ?? '', filters.propertyType ?? '')) {
+      next.propertyType = ''
+    }
+    return next
+  }, [filters])
+
+  useEffect(() => {
+    const query = searchParams.toString()
+    const url = query ? `/catalog?${query}` : '/catalog'
+    console.log('[CatalogPage] current query params:', query)
+    console.log('[CatalogPage] current category:', filters.category ?? '')
+    console.log('[CatalogPage] filters state:', filters)
+    console.log('[CatalogPage] current query URL:', url)
+  }, [filters, searchParams])
+
+  useEffect(() => {
+    const rawPropertyType = (searchParams.get('propertyType') ?? '').trim()
+    if (!rawPropertyType) return
+    const normalizedRawPropertyType = normalizeOptionValue(
+      rawPropertyType,
+      PROPERTY_TYPE_ALIASES,
+      PROPERTY_TYPE_VALUES,
+    )
+    if (isPropertyTypeValidForCategory(filters.category ?? '', normalizedRawPropertyType)) return
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('propertyType')
+      return next
+    })
+  }, [filters.category, filters.propertyType, searchParams, setSearchParams])
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetchCatalog(filters)
+    const requestParams = new URLSearchParams()
+    Object.entries(requestFilters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        requestParams.set(key, String(value))
+      }
+    })
+    console.log('[CatalogPage] category:', requestFilters.category ?? '')
+    console.log('[CatalogPage] propertyType:', requestFilters.propertyType ?? '')
+    console.log('[CatalogPage] request query:', requestParams.toString())
+    console.log('[CatalogPage] requesting with filters:', requestFilters)
+    fetchCatalog(requestFilters)
       .then((data) => {
         if (cancelled) return
         setItems(data)
@@ -111,7 +226,7 @@ export function CatalogPage() {
     return () => {
       cancelled = true
     }
-  }, [filters])
+  }, [requestFilters])
 
   const sortedItems = useMemo(() => applySort(items, filters.sort), [items, filters.sort])
   const empty = !loading && !error && sortedItems.length === 0
@@ -128,6 +243,9 @@ export function CatalogPage() {
       })
       // если сортировка не задана явно — по умолчанию newest
       if (!next.get('sort')) next.set('sort', 'newest')
+      const query = next.toString()
+      const nextUrl = query ? `/catalog?${query}` : '/catalog'
+      console.log('[CatalogPage] next query URL:', nextUrl)
       return next
     })
   }
@@ -159,7 +277,13 @@ export function CatalogPage() {
                   id="catalog-category"
                   className={styles.select}
                   value={filters.category ?? ''}
-                  onChange={(e) => updateFilter({ category: e.target.value, propertyType: '' })}
+                  onChange={(e) =>
+                    updateFilter({
+                      category: e.target.value,
+                      propertyType: '',
+                      rooms: e.target.value === 'commercial' ? '' : filters.rooms,
+                    })
+                  }
                 >
                   {CATEGORY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -178,8 +302,9 @@ export function CatalogPage() {
                   className={styles.select}
                   value={filters.propertyType ?? ''}
                   onChange={(e) => updateFilter({ propertyType: e.target.value })}
+                  disabled={!filters.category}
                 >
-                  {PROPERTY_TYPE_OPTIONS.map((o) => (
+                  {propertyTypeOptions.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>

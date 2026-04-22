@@ -48,6 +48,9 @@ export async function fetchCatalog(filters: CatalogFilters): Promise<CatalogItem
     }
   })
 
+  console.log('[Catalog API] request filters:', filters)
+  console.log('[Catalog API] request URL:', url.toString())
+
   const res = await fetch(url.toString(), {
     headers: getAuthHeaders(),
   })
