@@ -35,7 +35,7 @@ function statusLabel(status: string): string {
   if (normalized === 'owner_resolves') return 'Владелец решает проблему'
   if (normalized === 'tenant_resolves') return 'Жилец решает проблему'
   if (normalized === 'waiting_expense') return 'Ожидаются расходы'
-  if (normalized === 'completed') return 'Завершена'
+  if (normalized === 'completed') return 'Завершено'
   if (normalized === 'rejected' || normalized === 'declined') return 'Отклонена'
   return status
 }
@@ -533,11 +533,9 @@ export function ProfileRequestsPage() {
               <div className={pageStyles.list}>
                 {displayedItems.map((item) => {
                   const isActiveListTab = listTab === 'active'
-                  const isOwnerCard =
-                    item.currentUserRole === 'owner' ||
-                    (Boolean(item.canMakeDecision) &&
-                      item.requesterId != null &&
-                      String(item.requesterId) !== String(currentUserId ?? ''))
+                  const isTenant = String(currentUserId ?? '') === String(item.requesterId ?? '')
+                  const isOwner = String(currentUserId ?? '') === String(item.property?.ownerId ?? item.propertyOwnerId ?? '')
+                  const isOwnerCard = isOwner
                   const photoOk = !!item.property.photoUrl && !brokenPhotos[item.id]
                   const visibleRequestPhotos = item.requestPhotos
                     .map((src, idx) => ({ src, idx }))
@@ -547,31 +545,29 @@ export function ProfileRequestsPage() {
                     .filter(({ idx }) => !brokenExpensePhotos[`${item.id}-${idx}`])
                   const canOwnerDecideByStatus =
                     isActiveListTab &&
-                    isOwnerCard &&
-                    (item.status.toLowerCase() === 'pending' || item.status.toLowerCase() === 'in_review')
-                  const isTenantResolver =
-                    item.resolutionType === 'tenant' &&
-                    String(item.requesterId ?? '') === String(currentUserId ?? '')
-                  const showExpenseForm = isActiveListTab && isTenantResolver
-                  const hasSubmittedExpense =
-                    item.expenseAmount !== null ||
-                    Boolean(item.expenseComment?.trim()) ||
-                    visibleExpensePhotos.length > 0
+                    item.status.toLowerCase() === 'pending'
+                  const showExpenseForm =
+                    item.resolutionType === 'tenant' && !isOwner && isTenant && !item.expenseAmount
                   const isExpenseFormOpen = Boolean(openExpenseForms[item.id])
                   const isRequestCompleted = ['completed', 'closed', 'done'].includes(
                     item.status.toLowerCase(),
                   )
                   const ownerCanConfirmExpense =
-                    isActiveListTab &&
-                    isOwnerCard &&
-                    item.resolutionType === 'tenant' &&
-                    hasSubmittedExpense &&
-                    !isRequestCompleted
+                    item.resolutionType === 'tenant' && isOwner && Boolean(item.expenseAmount)
+                  const showOwnerExpenseReview = ownerCanConfirmExpense
                   const showOwnerCompleteButton =
                     isActiveListTab &&
                     isOwnerCard &&
                     item.resolutionType === 'owner' &&
-                    item.status.toLowerCase() === 'owner_resolves'
+                    !isRequestCompleted
+                  console.log('FINAL CHECK', {
+                    resolution_type: item.resolutionType,
+                    currentUserId,
+                    requesterId: item.requesterId,
+                    ownerId: item.property?.ownerId ?? item.propertyOwnerId,
+                    isTenant,
+                    isOwner,
+                  })
                   return (
                     <article key={item.id} className={pageStyles.item}>
                       <div className={pageStyles.photoWrap}>
@@ -661,13 +657,17 @@ export function ProfileRequestsPage() {
                         <p className={pageStyles.extraMeta}>
                           Тип решения: {resolutionTypeLabel(item.resolutionType)}
                         </p>
-                        <p className={pageStyles.extraMeta}>
-                          Сумма расходов: {formatExpenseAmount(item.expenseAmount)}
-                        </p>
-                        <p className={pageStyles.extraMeta}>
-                          Комментарий по расходам: {item.expenseComment?.trim() || '—'}
-                        </p>
-                        {visibleExpensePhotos.length > 0 ? (
+                        {showOwnerExpenseReview ? (
+                          <>
+                            <p className={pageStyles.extraMeta}>
+                              Сумма расходов: {formatExpenseAmount(item.expenseAmount)}
+                            </p>
+                            <p className={pageStyles.extraMeta}>
+                              Комментарий по расходам: {item.expenseComment?.trim() || '—'}
+                            </p>
+                          </>
+                        ) : null}
+                        {showOwnerExpenseReview && visibleExpensePhotos.length > 0 ? (
                           <div className={pageStyles.expensePhotosBlock}>
                             <p className={pageStyles.extraMeta}>Фото затрат</p>
                             <div className={pageStyles.expensePhotos}>
@@ -738,7 +738,7 @@ export function ProfileRequestsPage() {
                               onClick={() => handleDecision(item.id, 'owner')}
                               disabled={decisionBusyId === item.id}
                             >
-                              {decisionBusyId === item.id ? 'Сохранение…' : 'Решу сам'}
+                              {decisionBusyId === item.id ? 'Сохранение…' : 'Я решу'}
                             </button>
                             <button
                               type="button"
@@ -746,89 +746,76 @@ export function ProfileRequestsPage() {
                               onClick={() => handleDecision(item.id, 'tenant')}
                               disabled={decisionBusyId === item.id}
                             >
-                              {decisionBusyId === item.id ? 'Сохранение…' : 'Пусть жилец решит сам'}
+                              {decisionBusyId === item.id ? 'Сохранение…' : 'Пусть жилец решит'}
                             </button>
                           </div>
                         ) : null}
 
                         {showExpenseForm ? (
-                          hasSubmittedExpense ? (
-                            <>
-                              <p className={pageStyles.extraMeta}>
-                                Вы указали расходы: {formatExpenseAmount(item.expenseAmount)}
-                              </p>
-                              {!isRequestCompleted ? (
-                                <p className={pageStyles.extraMeta}>
-                                  Ожидается подтверждение владельца
-                                </p>
-                              ) : null}
-                            </>
-                          ) : (
-                            <div className={pageStyles.expenseFormWrap}>
-                              <button
-                                type="button"
-                                className={pageStyles.expenseToggle}
-                                onClick={() => toggleExpenseForm(item.id)}
-                                disabled={expenseBusyId === item.id}
-                              >
-                                {isExpenseFormOpen ? 'Указать расходы ▾' : 'Указать расходы ▸'}
-                              </button>
-                              <div
-                                className={`${pageStyles.expenseFormCollapse} ${
-                                  isExpenseFormOpen ? pageStyles.expenseFormOpen : ''
-                                }`.trim()}
-                              >
-                                <div className={pageStyles.expenseForm}>
-                                  <div className={pageStyles.expenseRow}>
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      step="1"
-                                      className={pageStyles.input}
-                                      placeholder="Сумма расходов"
-                                      value={expenseDrafts[item.id]?.amount ?? ''}
-                                      onChange={(e) =>
-                                        handleExpenseDraftChange(item.id, { amount: e.target.value })
-                                      }
-                                      disabled={expenseBusyId === item.id}
-                                    />
-                                  </div>
-                                  <textarea
-                                    className={pageStyles.textarea}
-                                    placeholder="Комментарий к расходам"
-                                    value={expenseDrafts[item.id]?.comment ?? ''}
+                          <div className={pageStyles.expenseFormWrap}>
+                            <button
+                              type="button"
+                              className={pageStyles.expenseToggle}
+                              onClick={() => toggleExpenseForm(item.id)}
+                              disabled={expenseBusyId === item.id}
+                            >
+                              {isExpenseFormOpen ? 'Указать расходы ▾' : 'Указать расходы ▸'}
+                            </button>
+                            <div
+                              className={`${pageStyles.expenseFormCollapse} ${
+                                isExpenseFormOpen ? pageStyles.expenseFormOpen : ''
+                              }`.trim()}
+                            >
+                              <div className={pageStyles.expenseForm}>
+                                <div className={pageStyles.expenseRow}>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step="1"
+                                    className={pageStyles.input}
+                                    placeholder="Сумма расходов"
+                                    value={expenseDrafts[item.id]?.amount ?? ''}
                                     onChange={(e) =>
-                                      handleExpenseDraftChange(item.id, { comment: e.target.value })
+                                      handleExpenseDraftChange(item.id, { amount: e.target.value })
                                     }
                                     disabled={expenseBusyId === item.id}
                                   />
-                                  <div className={pageStyles.expenseRow}>
-                                    <input
-                                      type="file"
-                                      multiple
-                                      accept="image/*"
-                                      className={pageStyles.input}
-                                      onChange={(e) => handleExpensePhotosChange(item.id, e.target.files)}
-                                      disabled={expenseBusyId === item.id}
-                                    />
-                                    {(expenseDrafts[item.id]?.photos?.length ?? 0) > 0 ? (
-                                      <p className={pageStyles.hint}>
-                                        Выбрано фото: {expenseDrafts[item.id]?.photos.length}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className={pageStyles.btnSubmitInline}
-                                    onClick={() => handleSubmitExpense(item.id)}
-                                    disabled={expenseBusyId === item.id}
-                                  >
-                                    {expenseBusyId === item.id ? 'Сохранение…' : 'Отправить'}
-                                  </button>
                                 </div>
+                                <textarea
+                                  className={pageStyles.textarea}
+                                  placeholder="Комментарий к расходам"
+                                  value={expenseDrafts[item.id]?.comment ?? ''}
+                                  onChange={(e) =>
+                                    handleExpenseDraftChange(item.id, { comment: e.target.value })
+                                  }
+                                  disabled={expenseBusyId === item.id}
+                                />
+                                <div className={pageStyles.expenseRow}>
+                                  <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    className={pageStyles.input}
+                                    onChange={(e) => handleExpensePhotosChange(item.id, e.target.files)}
+                                    disabled={expenseBusyId === item.id}
+                                  />
+                                  {(expenseDrafts[item.id]?.photos?.length ?? 0) > 0 ? (
+                                    <p className={pageStyles.hint}>
+                                      Выбрано фото: {expenseDrafts[item.id]?.photos.length}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                <button
+                                  type="button"
+                                  className={pageStyles.btnSubmitInline}
+                                  onClick={() => handleSubmitExpense(item.id)}
+                                  disabled={expenseBusyId === item.id}
+                                >
+                                  {expenseBusyId === item.id ? 'Сохранение…' : 'Отправить'}
+                                </button>
                               </div>
                             </div>
-                          )
+                          </div>
                         ) : null}
                       </div>
                     </article>

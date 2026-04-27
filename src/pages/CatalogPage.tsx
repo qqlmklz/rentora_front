@@ -228,7 +228,8 @@ export function CatalogPage() {
     }
   }, [requestFilters])
 
-  const sortedItems = useMemo(() => applySort(items, filters.sort), [items, filters.sort])
+  const visibleItems = useMemo(() => items.filter((item) => !item.isArchived), [items])
+  const sortedItems = useMemo(() => applySort(visibleItems, filters.sort), [visibleItems, filters.sort])
   const empty = !loading && !error && sortedItems.length === 0
 
   const updateFilter = (patch: Partial<CatalogFilters>) => {

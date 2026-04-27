@@ -10,6 +10,7 @@ export type ProfilePropertyItem = {
   totalArea: number | string | null
   city: string | null
   district: string | null
+  isArchived: boolean
 }
 
 function resolveAssetUrl(value?: string | null): string | null {
@@ -45,6 +46,15 @@ function normalizeItem(raw: unknown): ProfilePropertyItem | null {
   const p = raw as Record<string, unknown>
   const id = p.id ?? p._id
   if (id === undefined || id === null) return null
+  const contracts = p.contracts
+  const hasActiveContract =
+    Boolean(p.hasActiveContract ?? p.has_active_contract ?? p.activeContract ?? p.active_contract) ||
+    (Array.isArray(contracts) &&
+      contracts.some((c) => {
+        if (!c || typeof c !== 'object') return false
+        const status = String((c as Record<string, unknown>).status ?? '').toLowerCase()
+        return status === 'active'
+      }))
   return {
     id: String(id),
     photoUrl: extractFirstPhoto(p),
@@ -59,6 +69,7 @@ function normalizeItem(raw: unknown): ProfilePropertyItem | null {
     totalArea: (p.totalArea ?? p.area ?? p.square) as ProfilePropertyItem['totalArea'],
     city: (p.city as string) ?? null,
     district: (p.district ?? p.region) as string | null,
+    isArchived: Boolean(p.isArchived ?? p.is_archived) || hasActiveContract,
   }
 }
 
@@ -69,13 +80,42 @@ export async function fetchProfileProperties(): Promise<ProfilePropertyItem[]> {
     throw new Error(await res.text().catch(() => `Ошибка загрузки: ${res.status}`))
   }
   const data = await res.json()
-  const list: unknown[] = Array.isArray(data)
-    ? data
-    : Array.isArray((data as { items?: unknown }).items)
-      ? ((data as { items: unknown[] }).items ?? [])
-      : Array.isArray((data as { properties?: unknown }).properties)
-        ? ((data as { properties: unknown[] }).properties ?? [])
-        : []
+  if (Array.isArray(data)) {
+    return data.map(normalizeItem).filter(Boolean) as ProfilePropertyItem[]
+  }
+
+  const obj = (data && typeof data === 'object' ? (data as Record<string, unknown>) : {}) as Record<
+    string,
+    unknown
+  >
+  const activeRaw = Array.isArray(obj.activeListings)
+    ? obj.activeListings
+    : Array.isArray(obj.active_listings)
+      ? obj.active_listings
+      : []
+  const archivedRaw = Array.isArray(obj.archivedListings)
+    ? obj.archivedListings
+    : Array.isArray(obj.archived_listings)
+      ? obj.archived_listings
+      : []
+
+  if (activeRaw.length > 0 || archivedRaw.length > 0) {
+    const active = activeRaw
+      .map((row) => normalizeItem(row))
+      .filter(Boolean)
+      .map((item) => ({ ...(item as ProfilePropertyItem), isArchived: false }))
+    const archived = archivedRaw
+      .map((row) => normalizeItem(row))
+      .filter(Boolean)
+      .map((item) => ({ ...(item as ProfilePropertyItem), isArchived: true }))
+    return [...active, ...archived]
+  }
+
+  const list: unknown[] = Array.isArray(obj.items)
+    ? obj.items
+    : Array.isArray(obj.properties)
+      ? obj.properties
+      : []
   return list.map(normalizeItem).filter(Boolean) as ProfilePropertyItem[]
 }
 

@@ -58,6 +58,7 @@ const sidebar = (
 export function ProfilePropertiesPage() {
   const navigate = useNavigate()
   const [items, setItems] = useState<ProfilePropertyItem[]>([])
+  const [listTab, setListTab] = useState<'active' | 'archived'>('active')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [brokenPhotos, setBrokenPhotos] = useState<Record<string, boolean>>({})
@@ -84,7 +85,16 @@ export function ProfilePropertiesPage() {
     load()
   }, [navigate, load])
 
-  const empty = useMemo(() => !loading && !error && items.length === 0, [loading, error, items.length])
+  const activeListings = useMemo(() => items.filter((item) => !item.isArchived), [items])
+  const archivedListings = useMemo(() => items.filter((item) => item.isArchived), [items])
+  const displayedItems = useMemo(
+    () => (listTab === 'active' ? activeListings : archivedListings),
+    [listTab, activeListings, archivedListings],
+  )
+  const empty = useMemo(
+    () => !loading && !error && displayedItems.length === 0,
+    [loading, error, displayedItems.length],
+  )
 
   const handleEdit = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
@@ -149,6 +159,26 @@ export function ProfilePropertiesPage() {
         <div className={styles.container}>
           <section className={styles.card}>
             <h1 className={styles.title}>Мои объекты</h1>
+            <div className={pageStyles.tabsPrimary} role="tablist" aria-label="Список объявлений владельца">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={listTab === 'active'}
+                className={`${pageStyles.tabPrimary} ${listTab === 'active' ? pageStyles.tabPrimaryActive : ''}`.trim()}
+                onClick={() => setListTab('active')}
+              >
+                Активные
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={listTab === 'archived'}
+                className={`${pageStyles.tabPrimary} ${listTab === 'archived' ? pageStyles.tabPrimaryActive : ''}`.trim()}
+                onClick={() => setListTab('archived')}
+              >
+                Архив
+              </button>
+            </div>
 
             {error && (
               <p className={pageStyles.inlineError} role="alert">
@@ -157,10 +187,14 @@ export function ProfilePropertiesPage() {
             )}
 
             {empty ? (
-              <p className={pageStyles.empty}>У вас пока нет объявлений</p>
+              <p className={pageStyles.empty}>
+                {listTab === 'active'
+                  ? 'У вас пока нет активных объявлений'
+                  : 'В архиве пока нет объявлений'}
+              </p>
             ) : (
               <div className={pageStyles.list}>
-                {items.map((item) => {
+                {displayedItems.map((item) => {
                   const price = formatPrice(item.price)
                   const details = formatDetails(item)
                   const location = formatLocation(item)

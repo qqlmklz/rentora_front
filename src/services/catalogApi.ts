@@ -20,6 +20,7 @@ export type CatalogItem = {
   totalArea?: number | string | null
   city?: string | null
   district?: string | null
+  isArchived?: boolean
 }
 
 function resolveAssetUrl(value?: string | null): string | null {
@@ -111,6 +112,7 @@ export async function fetchCatalog(filters: CatalogFilters): Promise<CatalogItem
       totalArea: p?.totalArea ?? p?.area ?? p?.square ?? null,
       city: p?.city ?? null,
       district: p?.district ?? p?.region ?? null,
+      isArchived: Boolean(p?.isArchived ?? p?.is_archived),
     } as CatalogItem
   })
 }

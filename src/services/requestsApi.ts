@@ -7,6 +7,7 @@ export type RequestPropertyInfo = {
   address: string | null
   city: string | null
   district: string | null
+  ownerId: string | null
 }
 
 export type ProfileRequestItem = {
@@ -32,6 +33,8 @@ export type ProfileRequestItem = {
   currentUserRole: 'owner' | 'tenant' | null
   currentUserId: string | null
   requesterId: string | null
+  ownerId: string | null
+  propertyOwnerId: string | null
   canMakeDecision: boolean
   canSubmitExpense: boolean
   requesterName: string | null
@@ -124,6 +127,7 @@ function normalizeProperty(raw: unknown): RequestPropertyInfo | null {
     address: (p.address as string) ?? null,
     city: (p.city as string) ?? null,
     district: (p.district ?? p.region) as string | null,
+    ownerId: coerceIdString(p.ownerId ?? p.owner_id ?? p.userId ?? p.user_id ?? p.landlordId ?? p.landlord_id),
   }
 }
 
@@ -149,6 +153,7 @@ function loosePropertyInfoFromPlainObject(p: Record<string, unknown>): RequestPr
     address: (p.address as string) ?? null,
     city: (p.city as string) ?? null,
     district: (p.district ?? p.region) as string | null,
+    ownerId: coerceIdString(p.ownerId ?? p.owner_id ?? p.userId ?? p.user_id ?? p.landlordId ?? p.landlord_id),
   }
 }
 
@@ -172,6 +177,7 @@ function fallbackPropertyFromRequest(r: Record<string, unknown>, requestId: stri
     address: null,
     city: null,
     district: null,
+    ownerId: null,
   }
 }
 
@@ -328,6 +334,21 @@ function normalizeRequestItem(raw: unknown): ProfileRequestItem | null {
         ? (r.createdBy as Record<string, unknown>).id ?? (r.createdBy as Record<string, unknown>)._id
         : null) ??
       null) as string | null
+  const ownerId = coerceIdString(
+    r.ownerId ??
+      r.owner_id ??
+      (r.owner && typeof r.owner === 'object'
+        ? (r.owner as Record<string, unknown>).id ?? (r.owner as Record<string, unknown>)._id
+        : null),
+  )
+  const propertyOwnerId = coerceIdString(
+    r.propertyOwnerId ??
+      r.property_owner_id ??
+      propertyCandidate.ownerId ??
+      (r.property && typeof r.property === 'object'
+        ? (r.property as Record<string, unknown>).ownerId ?? (r.property as Record<string, unknown>).owner_id
+        : null),
+  )
   const currentUserId =
     (r.currentUserId ??
       (r.currentUser && typeof r.currentUser === 'object'
@@ -388,6 +409,8 @@ function normalizeRequestItem(raw: unknown): ProfileRequestItem | null {
     currentUserRole,
     currentUserId: currentUserId ? String(currentUserId) : null,
     requesterId: requesterId ? String(requesterId) : null,
+    ownerId,
+    propertyOwnerId,
     canMakeDecision,
     canSubmitExpense,
     requesterName:
@@ -675,12 +698,12 @@ export async function setRequestDecision(
   requestId: string,
   resolutionType: RequestDecisionResolutionType,
 ): Promise<ProfileRequestItem | null> {
-  const url = getProfileUrl(`/api/requests/${encodeURIComponent(requestId)}/decision`)
+  const url = getProfileUrl(`/api/requests/${encodeURIComponent(requestId)}/set-resolution`)
   console.log('[Requests API] decision request:', { requestId, resolutionType, url })
   const res = await fetch(url, {
-    method: 'PATCH',
+    method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ resolutionType }),
+    body: JSON.stringify({ resolution_type: resolutionType }),
   })
   const responseBody = await res.clone().json().catch(async () => {
     const text = await res.clone().text().catch(() => '')
