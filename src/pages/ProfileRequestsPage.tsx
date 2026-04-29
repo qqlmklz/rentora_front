@@ -269,8 +269,7 @@ export function ProfileRequestsPage() {
     () => !loading && !error && displayedItems.length === 0,
     [loading, error, displayedItems.length],
   )
-  const emptyMessage =
-    listTab === 'active' ? 'Активных заявок пока нет' : 'В архиве пока нет заявок'
+  const emptyMessage = 'Активных заявок пока нет'
   const noAvailableProperties = !propertiesLoading && properties.length === 0
   const selectedProperty = useMemo(
     () => properties.find((x) => String(x.id) === String(selectedPropertyId)) ?? null,
@@ -509,12 +508,6 @@ export function ProfileRequestsPage() {
                 Архив
               </button>
             </div>
-
-            {noAvailableProperties ? (
-              <p className={pageStyles.inlineWarn} role="status">
-                У вас нет доступных объектов для создания заявки
-              </p>
-            ) : null}
 
             {error && (
               <p className={pageStyles.inlineError} role="alert">

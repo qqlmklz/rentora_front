@@ -3,7 +3,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .title {
@@ -127,6 +127,7 @@
 
 .empty {
   margin: 0;
+  padding: 16px 0 0;
   color: #6b7280;
   font-size: 15px;
 }

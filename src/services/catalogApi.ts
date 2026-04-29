@@ -117,3 +117,57 @@ export async function fetchCatalog(filters: CatalogFilters): Promise<CatalogItem
   })
 }
 
+export async function fetchRecommendations(): Promise<CatalogItem[]> {
+  const base = getApiBase()
+  const url = new URL((base || '') + '/api/listings/recommendations', base || window.location.origin)
+  const res = await fetch(url.toString(), {
+    headers: getAuthHeaders(),
+  })
+  if (!res.ok) {
+    throw new Error(await res.text().catch(() => `Recommendations fetch failed: ${res.status}`))
+  }
+  const data = await res.json()
+  const list: any[] = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.items)
+      ? data.items
+      : Array.isArray(data?.listings)
+        ? data.listings
+        : Array.isArray(data?.properties)
+          ? data.properties
+          : []
+
+  return list
+    .map((raw) => {
+      const p = raw?.property ?? raw
+      const id = p?.id ?? p?._id ?? raw?.id
+      if (id === undefined || id === null) return null
+      let photo: string | null = null
+      if (Array.isArray(p?.photos) && p.photos.length > 0) {
+        const first = p.photos[0]
+        if (typeof first === 'string') photo = first
+        else if (first && typeof first === 'object') {
+          photo = first.url ?? first.image_url ?? first.path ?? first.src ?? first.filename ?? null
+        }
+      }
+      if (!photo && p?.photoUrl) photo = p.photoUrl
+      if (!photo && p?.image) photo = p.image
+      if (!photo && p?.image_url) photo = p.image_url
+      if (!photo && p?.photo) photo = p.photo
+      if (!photo && p?.cover) photo = p.cover
+      return {
+        id: String(id),
+        photoUrl: resolveAssetUrl(photo),
+        price: p?.price ?? null,
+        title: p?.title ?? null,
+        propertyType: p?.propertyType ?? p?.subcategory ?? p?.type ?? null,
+        rooms: p?.rooms ?? p?.roomsCount ?? null,
+        totalArea: p?.totalArea ?? p?.area ?? p?.square ?? null,
+        city: p?.city ?? null,
+        district: p?.district ?? p?.region ?? null,
+        isArchived: Boolean(p?.isArchived ?? p?.is_archived),
+      } as CatalogItem
+    })
+    .filter(Boolean) as CatalogItem[]
+}
+

@@ -1,49 +1,33 @@
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { fetchRecommendations, type CatalogItem } from '../../services/catalogApi'
 import styles from './recommendations.module.css'
-
-export type RecommendationItem = {
-  id: string
-  price: number | null
-  propertyType: string | null
-  rooms: string | null
-  area: number | null
-  city: string | null
-  district: string | null
-  imageUrl?: string | null
-}
 
 type Status = 'idle' | 'loading' | 'success' | 'empty' | 'error'
 
 export const RecommendationsSection: FC = () => {
+  const navigate = useNavigate()
   const [status, setStatus] = useState<Status>('loading')
-  const [items, setItems] = useState<RecommendationItem[]>([])
+  const [items, setItems] = useState<CatalogItem[]>([])
+  const [title, setTitle] = useState('Рекомендуем для вас')
 
   useEffect(() => {
     let canceled = false
 
-    async function fetchRecommendations() {
+    async function loadRecommendations() {
       try {
         setStatus('loading')
-        // TODO: заменить на реальный запрос к API / БД
-        // Пример:
-        // const response = await fetch('/api/recommendations')
-        // const data: RecommendationItem[] = await response.json()
-        // if (canceled) return
-        // setItems(data)
-        // setStatus(data.length ? 'success' : 'empty')
-
-        const mockData: RecommendationItem[] = []
-
+        const recommendations = (await fetchRecommendations()).filter((x) => !x.isArchived)
         if (canceled) return
-
-        if (!mockData.length) {
-          setItems([])
-          setStatus('empty')
-        } else {
-          setItems(mockData)
+        if (recommendations.length > 0) {
+          setItems(recommendations.slice(0, 4))
+          setTitle('Рекомендуем для вас')
           setStatus('success')
+          return
         }
+        setItems([])
+        setStatus('empty')
       } catch {
         if (!canceled) {
           setStatus('error')
@@ -51,7 +35,7 @@ export const RecommendationsSection: FC = () => {
       }
     }
 
-    fetchRecommendations()
+    loadRecommendations()
 
     return () => {
       canceled = true
@@ -62,28 +46,14 @@ export const RecommendationsSection: FC = () => {
     if (status === 'loading') {
       return (
         <div className={styles.grid} aria-label="Загрузка подборки объектов">
-          {Array.from({ length: 3 }).map((_, index) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className={styles.cardSkeleton} />
           ))}
         </div>
       )
     }
 
-    if (status === 'empty') {
-      return (
-        <div className={styles.empty}>
-          <p>Пока нет подходящих объектов. Попробуйте изменить параметры поиска.</p>
-        </div>
-      )
-    }
-
-    if (status === 'error') {
-      return (
-        <div className={styles.empty}>
-          <p>Не удалось загрузить подборку. Попробуйте обновить страницу позже.</p>
-        </div>
-      )
-    }
+    if (status === 'empty' || status === 'error') return null
 
     if (!items.length) {
       return null
@@ -92,18 +62,38 @@ export const RecommendationsSection: FC = () => {
     return (
       <div className={styles.grid}>
         {items.map((item) => {
-          const hasImage = !!item.imageUrl
+          const hasImage = !!item.photoUrl
           const locationParts = [item.city, item.district].filter(Boolean)
+          const priceValue =
+            item.price === null || item.price === undefined || item.price === ''
+              ? null
+              : Number(String(item.price).replace(/\s/g, '').replace(',', '.'))
+          const details = [
+            item.propertyType,
+            item.rooms !== null && item.rooms !== undefined && item.rooms !== '' ? `${item.rooms} комн.` : null,
+            item.totalArea !== null && item.totalArea !== undefined && item.totalArea !== ''
+              ? `${item.totalArea} м²`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')
 
           return (
-            <article key={item.id} className={styles.card}>
+            <article
+              key={item.id}
+              className={`${styles.card} ${styles.small}`.trim()}
+              onClick={() => navigate(`/properties/${encodeURIComponent(item.id)}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  navigate(`/properties/${encodeURIComponent(item.id)}`)
+                }
+              }}
+            >
               <div className={styles.imageWrapper}>
                 {hasImage ? (
-                  <div
-                    className={styles.image}
-                    style={{ backgroundImage: `url(${item.imageUrl})` }}
-                    aria-label="Фотография объекта"
-                  />
+                  <img className={styles.image} src={item.photoUrl ?? undefined} alt="" loading="lazy" />
                 ) : (
                   <div className={styles.imagePlaceholder}>
                     <span>Фото скоро будет</span>
@@ -113,18 +103,14 @@ export const RecommendationsSection: FC = () => {
 
               <div className={styles.cardBody}>
                 <div className={styles.priceRow}>
-                  {item.price != null ? (
-                    <span className={styles.price}>{item.price.toLocaleString('ru-RU')} ₽</span>
+                  {priceValue != null && Number.isFinite(priceValue) ? (
+                    <span className={styles.price}>{new Intl.NumberFormat('ru-RU').format(priceValue)} ₽</span>
                   ) : (
                     <span className={styles.priceMuted}>Цена по запросу</span>
                   )}
                 </div>
 
-                <div className={styles.meta}>
-                  {item.propertyType && <span>{item.propertyType}</span>}
-                  {item.rooms && <span> · {item.rooms}</span>}
-                  {item.area != null && <span> · {item.area} м²</span>}
-                </div>
+                <div className={styles.meta}>{details || 'Объявление'}</div>
 
                 {locationParts.length > 0 && (
                   <div className={styles.location}>{locationParts.join(', ')}</div>
@@ -137,11 +123,13 @@ export const RecommendationsSection: FC = () => {
     )
   }
 
+  if (status === 'empty' || status === 'error') return null
+
   return (
     <section className={styles.section} aria-labelledby="may-suit-title">
       <div className={styles.headerRow}>
         <h2 id="may-suit-title" className={styles.title}>
-          Могут подойти
+          {title}
         </h2>
       </div>
       {renderContent()}
