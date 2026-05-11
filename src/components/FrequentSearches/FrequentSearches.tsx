@@ -1,10 +1,10 @@
-import type { FC } from 'react'
+import type { FC, ReactNode } from 'react'
 import styles from './frequentSearches.module.css'
 
 type FrequentItem = {
   label: string
   href: string
-  icon?: JSX.Element
+  icon?: ReactNode
 }
 
 const items: FrequentItem[] = [

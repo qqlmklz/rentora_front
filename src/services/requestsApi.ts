@@ -268,6 +268,7 @@ function resolvePropertyForItem(r: Record<string, unknown>, requestIdStr: string
       address: (p.address as string) ?? null,
       city: (p.city as string) ?? null,
       district: (p.district ?? p.region) as string | null,
+      ownerId: coerceIdString(p.ownerId ?? p.owner_id ?? p.userId ?? p.user_id ?? p.landlordId ?? p.landlord_id),
     }
   }
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useMatch, useNavigate } from 'react-router-dom'
 import { getApiBase, getAuthHeaders, getProfileUrl } from '../services/api'
 import {
@@ -43,6 +44,14 @@ type FormState = {
   prepayment: '' | '0' | '1' | '2'
   allowChildren: boolean
   allowPets: boolean
+}
+
+type AddressSuggestion = {
+  value: string
+  city: string
+  district: string
+  lat: number | null
+  lon: number | null
 }
 
 const initialState: FormState = {
@@ -177,12 +186,63 @@ export function NewPropertyPage() {
   const [propertyLoading, setPropertyLoading] = useState(isEdit)
   const [propertyLoadError, setPropertyLoadError] = useState<string | null>(null)
   const [loadForbidden, setLoadForbidden] = useState(false)
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([])
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false)
+  const addressSuggestAbortRef = useRef<AbortController | null>(null)
+  const addressInputRef = useRef<HTMLInputElement | null>(null)
+  const addressDropdownRef = useRef<HTMLDivElement | null>(null)
+  const [addressDropdownRect, setAddressDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null)
 
   useEffect(() => {
     return () => {
       newPhotoPreviews.forEach((u) => URL.revokeObjectURL(u))
     }
   }, [newPhotoPreviews])
+
+  useEffect(() => {
+    return () => {
+      if (addressSuggestAbortRef.current) {
+        addressSuggestAbortRef.current.abort()
+        addressSuggestAbortRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node | null
+      if (!target) return
+      if (addressInputRef.current?.contains(target)) return
+      if (addressDropdownRef.current?.contains(target)) return
+      if (suggestionsOpen) {
+        setSuggestionsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [suggestionsOpen])
+
+  const updateAddressDropdownRect = () => {
+    const rect = addressInputRef.current?.getBoundingClientRect()
+    if (!rect) return
+    setAddressDropdownRect({
+      top: rect.bottom + 6,
+      left: rect.left,
+      width: rect.width,
+    })
+  }
+
+  useEffect(() => {
+    if (!suggestionsOpen) return
+    updateAddressDropdownRect()
+    const handleReposition = () => updateAddressDropdownRect()
+    window.addEventListener('resize', handleReposition)
+    window.addEventListener('scroll', handleReposition, true)
+    return () => {
+      window.removeEventListener('resize', handleReposition)
+      window.removeEventListener('scroll', handleReposition, true)
+    }
+  }, [suggestionsOpen])
 
   useEffect(() => {
     if (!isEdit || !editId) return
@@ -291,6 +351,98 @@ export function NewPropertyPage() {
   }
 
   const showError = (key: string) => touched[key] && !!errors[key]
+
+  const requestAddressSuggestions = (query: string) => {
+    const normalizedQuery = query.trim()
+    if (normalizedQuery.length < 3) {
+      setSuggestions([])
+      setSuggestionsOpen(false)
+      if (addressSuggestAbortRef.current) {
+        addressSuggestAbortRef.current.abort()
+        addressSuggestAbortRef.current = null
+      }
+      return
+    }
+    if (addressSuggestAbortRef.current) {
+      addressSuggestAbortRef.current.abort()
+    }
+    const controller = new AbortController()
+    addressSuggestAbortRef.current = controller
+    fetch(getProfileUrl('/api/address/suggestions'), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ query: normalizedQuery }),
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return []
+        const data = await res.json().catch(() => null)
+        const list: unknown[] = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { suggestions?: unknown[] } | null)?.suggestions)
+            ? ((data as { suggestions: unknown[] }).suggestions ?? [])
+            : []
+        return list
+          .map((row) => {
+            if (!row || typeof row !== 'object') return null
+            const s = row as Record<string, unknown>
+            const value = String(s.value ?? '').trim()
+            if (!value) return null
+            return {
+              value,
+              city: String(s.city ?? '').trim(),
+              district: String(s.district ?? '').trim(),
+              lat: Number.isFinite(Number(s.lat)) ? Number(s.lat) : null,
+              lon: Number.isFinite(Number(s.lon)) ? Number(s.lon) : null,
+            } as AddressSuggestion
+          })
+          .filter(Boolean) as AddressSuggestion[]
+      })
+      .then((list) => {
+        if (controller.signal.aborted) return
+        setSuggestions(list)
+        setSuggestionsOpen(list.length > 0)
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return
+        setSuggestions([])
+        setSuggestionsOpen(false)
+      })
+  }
+
+  const handleAddressChange = (value: string) => {
+    setField('address', value)
+    updateAddressDropdownRect()
+  }
+
+  useEffect(() => {
+    const address = form.address.trim()
+    if (address.length < 3) {
+      setSuggestions([])
+      setSuggestionsOpen(false)
+      if (addressSuggestAbortRef.current) {
+        addressSuggestAbortRef.current.abort()
+        addressSuggestAbortRef.current = null
+      }
+      return
+    }
+    const timerId = window.setTimeout(() => {
+      requestAddressSuggestions(address)
+      updateAddressDropdownRect()
+    }, 500)
+    return () => window.clearTimeout(timerId)
+  }, [form.address])
+
+  const handleSelectSuggestion = (item: AddressSuggestion) => {
+    setForm((prev) => ({
+      ...prev,
+      address: item.value,
+      city: item.city || prev.city,
+      district: item.district || prev.district,
+    }))
+    setSuggestions([])
+    setSuggestionsOpen(false)
+  }
 
   const handlePickFiles = () => fileRef.current?.click()
 
@@ -577,14 +729,22 @@ export function NewPropertyPage() {
                 <label className={styles.label} htmlFor="address">
                   Введите адрес
                 </label>
-                <input
-                  id="address"
-                  className={styles.input}
-                  value={form.address}
-                  onChange={(e) => setField('address', e.target.value)}
-                  onBlur={() => setTouched((t) => ({ ...t, address: true }))}
-                  placeholder="Например, ул. Тверская, 1"
-                />
+                <div className={styles.addressWrapper}>
+                  <input
+                    id="address"
+                    ref={addressInputRef}
+                    className={styles.input}
+                    value={form.address}
+                    onChange={(e) => handleAddressChange(e.target.value)}
+                    onBlur={() => setTouched((t) => ({ ...t, address: true }))}
+                    onFocus={() => {
+                      updateAddressDropdownRect()
+                      if (suggestions.length > 0) setSuggestionsOpen(true)
+                    }}
+                    placeholder="Например, ул. Тверская, 1"
+                    autoComplete="off"
+                  />
+                </div>
                 {showError('address') && <p className={styles.error}>{errors.address}</p>}
               </div>
 
@@ -1000,6 +1160,35 @@ export function NewPropertyPage() {
           </section>
         </form>
       </div>
+      {suggestionsOpen && suggestions.length > 0 && addressDropdownRect
+        ? createPortal(
+            <div
+              ref={addressDropdownRef}
+              className={styles.addressDropdownPortal}
+              style={{
+                position: 'fixed',
+                top: addressDropdownRect.top,
+                left: addressDropdownRect.left,
+                width: addressDropdownRect.width,
+                zIndex: 9999,
+              }}
+              role="listbox"
+              aria-label="Подсказки адреса"
+            >
+              {suggestions.map((item, idx) => (
+                <button
+                  key={`${item.value}-${idx}`}
+                  type="button"
+                  className={styles.addressItem}
+                  onClick={() => handleSelectSuggestion(item)}
+                >
+                  {item.value}
+                </button>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }
