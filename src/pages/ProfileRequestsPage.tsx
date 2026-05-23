@@ -119,9 +119,6 @@ const sidebar = (
     <Link to="/profile/documents" className={styles.sidebarLink}>
       Документы
     </Link>
-    <a href="/profile/settings" className={styles.sidebarLink}>
-      Настройки
-    </a>
   </>
 )
 
@@ -527,7 +524,8 @@ export function ProfileRequestsPage() {
                 {displayedItems.map((item) => {
                   const isActiveListTab = listTab === 'active'
                   const isTenant = String(currentUserId ?? '') === String(item.requesterId ?? '')
-                  const isOwner = String(currentUserId ?? '') === String(item.property?.ownerId ?? item.propertyOwnerId ?? '')
+                  const ownerId = item.propertyOwnerId ?? item.property?.ownerId
+                  const isOwner = String(currentUserId ?? '') === String(ownerId ?? '')
                   const isOwnerCard = isOwner
                   const photoOk = !!item.property.photoUrl && !brokenPhotos[item.id]
                   const visibleRequestPhotos = item.requestPhotos
@@ -538,7 +536,8 @@ export function ProfileRequestsPage() {
                     .filter(({ idx }) => !brokenExpensePhotos[`${item.id}-${idx}`])
                   const canOwnerDecideByStatus =
                     isActiveListTab &&
-                    item.status.toLowerCase() === 'pending'
+                    item.status.toLowerCase() === 'pending' &&
+                    isOwner
                   const showExpenseForm =
                     item.resolutionType === 'tenant' && !isOwner && isTenant && !item.expenseAmount
                   const isExpenseFormOpen = Boolean(openExpenseForms[item.id])
@@ -553,14 +552,6 @@ export function ProfileRequestsPage() {
                     isOwnerCard &&
                     item.resolutionType === 'owner' &&
                     !isRequestCompleted
-                  console.log('FINAL CHECK', {
-                    resolution_type: item.resolutionType,
-                    currentUserId,
-                    requesterId: item.requesterId,
-                    ownerId: item.property?.ownerId ?? item.propertyOwnerId,
-                    isTenant,
-                    isOwner,
-                  })
                   return (
                     <article key={item.id} className={pageStyles.item}>
                       <div className={pageStyles.photoWrap}>

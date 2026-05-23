@@ -13,6 +13,7 @@ const PROPERTY_TYPE_OPTIONS = [
   { value: '', label: 'Любой объект' },
   { value: 'apartment', label: 'Квартира' },
   { value: 'room', label: 'Комната' },
+  { value: 'studio', label: 'Студия' },
   { value: 'house', label: 'Дом' },
   { value: 'cottage', label: 'Коттедж' },
   { value: 'office', label: 'Офис' },
@@ -23,7 +24,6 @@ const PROPERTY_TYPE_OPTIONS = [
 
 const ROOMS_OPTIONS = [
   { value: '', label: 'Любые' },
-  { value: 'studio', label: 'Студия' },
   { value: '1', label: '1' },
   { value: '2', label: '2' },
   { value: '3', label: '3' },
@@ -46,16 +46,13 @@ const CATEGORY_ALIASES: Record<string, string> = {
 const PROPERTY_TYPE_ALIASES: Record<string, string> = {
   квартира: 'apartment',
   комната: 'room',
+  студия: 'studio',
   дом: 'house',
   коттедж: 'cottage',
   офис: 'office',
   коворкинг: 'coworking',
   здание: 'building',
   склад: 'warehouse',
-}
-
-const ROOMS_ALIASES: Record<string, string> = {
-  студия: 'studio',
 }
 
 const SORT_ALIASES: Record<string, string> = {
@@ -70,7 +67,7 @@ const ROOMS_VALUES = new Set(ROOMS_OPTIONS.map((option) => option.value).filter(
 const SORT_VALUES = new Set(SORT_OPTIONS.map((option) => option.value))
 
 const PROPERTY_TYPES_BY_CATEGORY: Record<'residential' | 'commercial', string[]> = {
-  residential: ['apartment', 'room', 'house', 'cottage'],
+  residential: ['apartment', 'room', 'studio', 'house', 'cottage'],
   commercial: ['office', 'coworking', 'building', 'warehouse'],
 }
 
@@ -104,7 +101,7 @@ function filtersFromSearchParams(params: URLSearchParams): CatalogFilters {
     PROPERTY_TYPE_ALIASES,
     PROPERTY_TYPE_VALUES,
   )
-  const rooms = normalizeOptionValue(params.get('rooms'), ROOMS_ALIASES, ROOMS_VALUES)
+  const rooms = normalizeOptionValue(params.get('rooms'), {}, ROOMS_VALUES)
   return {
     category,
     propertyType: isPropertyTypeValidForCategory(category, propertyType) ? propertyType : '',
@@ -195,6 +192,18 @@ export function CatalogPage() {
       return next
     })
   }, [filters.category, filters.propertyType, searchParams, setSearchParams])
+
+  useEffect(() => {
+    const rawRooms = (searchParams.get('rooms') ?? '').trim()
+    if (!rawRooms) return
+    const normalizedRooms = normalizeOptionValue(rawRooms, {}, ROOMS_VALUES)
+    if (normalizedRooms) return
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('rooms')
+      return next
+    })
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     let cancelled = false

@@ -23,7 +23,6 @@ export type PropertyFormState = {
   kitchenArea: string
   floor: string
   floorsTotal: string
-  residentialType: '' | 'flat' | 'apartments'
   price: string
   utilitiesIncluded: '' | 'included' | 'not_included'
   utilitiesPrice: string
@@ -89,11 +88,6 @@ export function mapPropertyApiToForm(p: Record<string, unknown>): PropertyFormSt
     }
   }
 
-  const resTypeRaw = str(p.residentialType ?? p.housingType ?? p.housing_type).toLowerCase()
-  let residentialType: PropertyFormState['residentialType'] = ''
-  if (resTypeRaw === 'flat' || resTypeRaw === 'apartment') residentialType = 'flat'
-  else if (resTypeRaw === 'apartments' || resTypeRaw === 'apartment_hotel') residentialType = 'apartments'
-
   const prep = str(p.prepayment ?? '')
   let prepayment: PropertyFormState['prepayment'] = ''
   if (prep === '0' || prep === '1' || prep === '2' || prep === 'none') {
@@ -116,7 +110,6 @@ export function mapPropertyApiToForm(p: Record<string, unknown>): PropertyFormSt
     kitchenArea: str(p.kitchenArea ?? p.kitchen_area),
     floor: str(p.floor),
     floorsTotal: str(p.totalFloors ?? p.floorsTotal ?? p.floors_total),
-    residentialType,
     price: str(p.price),
     utilitiesIncluded: normalizeUtilities(p.utilitiesIncluded ?? p.utilities_included),
     utilitiesPrice: str(p.utilitiesPrice ?? p.utilities_price),

@@ -35,7 +35,6 @@ type FormState = {
   kitchenArea: string
   floor: string
   floorsTotal: string
-  residentialType: '' | 'flat' | 'apartments'
   price: string
   utilitiesIncluded: '' | 'included' | 'not_included'
   utilitiesPrice: string
@@ -72,7 +71,6 @@ const initialState: FormState = {
   kitchenArea: '',
   floor: '',
   floorsTotal: '',
-  residentialType: '',
   price: '',
   utilitiesIncluded: '',
   utilitiesPrice: '',
@@ -124,7 +122,6 @@ const PATCH_FORM_KEYS: (keyof FormState)[] = [
   'kitchenArea',
   'floor',
   'floorsTotal',
-  'residentialType',
   'price',
   'utilitiesIncluded',
   'utilitiesPrice',
@@ -340,7 +337,6 @@ export function NewPropertyPage() {
           next.rooms = ''
           next.livingArea = ''
           next.kitchenArea = ''
-          next.residentialType = ''
           next.allowChildren = false
           next.allowPets = false
         }
@@ -910,23 +906,6 @@ export function NewPropertyPage() {
                   onChange={(e) => setField('floorsTotal', e.target.value)}
                   placeholder="Например, 16"
                 />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="residentialType">
-                  Тип недвижимости
-                </label>
-                <select
-                  id="residentialType"
-                  className={styles.select}
-                  value={form.residentialType}
-                  onChange={(e) => setField('residentialType', e.target.value as FormState['residentialType'])}
-                  disabled={form.category === 'commercial'}
-                >
-                  <option value="">—</option>
-                  <option value="flat">Квартира</option>
-                  <option value="apartments">Апартаменты</option>
-                </select>
               </div>
             </div>
           </section>

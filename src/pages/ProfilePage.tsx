@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { Profile } from '../services/profileApi'
 import {
@@ -8,6 +8,13 @@ import {
   deleteAvatar,
   changePassword,
 } from '../services/profileApi'
+import {
+  PHONE_FOCUS_PREFIX,
+  applyPhoneMaskInput,
+  formatPhoneForMask,
+  getPhoneValidationError,
+  isRussianPhoneComplete,
+} from '../utils/phoneMask'
 import styles from './ProfilePage.module.css'
 
 export function ProfilePage() {
@@ -20,6 +27,7 @@ export function ProfilePage() {
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
   const [editPhone, setEditPhone] = useState('')
+  const [phoneTouched, setPhoneTouched] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
 
@@ -51,7 +59,7 @@ export function ProfilePage() {
           setCurrentAvatar(data.avatarUrl ?? null)
           setEditName(data.name)
           setEditEmail(data.email)
-          setEditPhone(data.phone ?? '')
+          setEditPhone(formatPhoneForMask(data.phone ?? ''))
         }
       })
       .catch((e) => {
@@ -159,8 +167,48 @@ export function ProfilePage() {
       .finally(() => setAvatarLoading(false))
   }
 
+  const phoneError = useMemo(() => getPhoneValidationError(editPhone), [editPhone])
+
+  const handleStartEditProfile = () => {
+    setEditMode(true)
+    setPhoneTouched(false)
+    setEditError(null)
+  }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditPhone(applyPhoneMaskInput(e.target.value))
+  }
+
+  const handlePhoneFocus = () => {
+    if (!editPhone) {
+      setEditPhone(PHONE_FOCUS_PREFIX)
+    }
+  }
+
+  const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return
+    const allowed = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End']
+    if (allowed.includes(e.key)) return
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault()
+    }
+  }
+
+  const handlePhonePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const formatted = formatPhoneForMask(e.clipboardData.getData('text'))
+    if (formatted) {
+      setEditPhone(formatted)
+    }
+  }
+
   const handleSaveProfile = async () => {
     if (!profile) return
+    setPhoneTouched(true)
+    if (!isRussianPhoneComplete(editPhone)) {
+      setEditError(null)
+      return
+    }
     setEditError(null)
     setEditSaving(true)
     try {
@@ -260,9 +308,6 @@ export function ProfilePage() {
           <Link to="/profile/documents" className={styles.sidebarLink}>
             Документы
           </Link>
-          <a href="/profile/settings" className={styles.sidebarLink}>
-            Настройки
-          </a>
         </nav>
       </aside>
 
@@ -369,28 +414,46 @@ export function ProfilePage() {
                   />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Телефон</label>
+                  <label className={styles.label} htmlFor="profile-phone">
+                    Телефон
+                  </label>
                   <input
+                    id="profile-phone"
                     type="tel"
                     className={styles.input}
                     value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    placeholder="Телефон"
+                    onChange={handlePhoneChange}
+                    onFocus={handlePhoneFocus}
+                    onKeyDown={handlePhoneKeyDown}
+                    onPaste={handlePhonePaste}
+                    onBlur={() => setPhoneTouched(true)}
+                    inputMode="numeric"
+                    autoComplete="tel"
                   />
+                  {phoneTouched && phoneError && (
+                    <p className={styles.fieldError}>{phoneError}</p>
+                  )}
                 </div>
                 <div className={styles.actions}>
                   <button
                     type="button"
                     className={styles.primaryButton}
                     onClick={handleSaveProfile}
-                    disabled={editSaving}
+                    disabled={editSaving || Boolean(phoneError)}
                   >
                     {editSaving ? 'Сохранение…' : 'Сохранить'}
                   </button>
                   <button
                     type="button"
                     className={styles.secondaryButton}
-                    onClick={() => setEditMode(false)}
+                    onClick={() => {
+                      setEditMode(false)
+                      setEditName(profile.name)
+                      setEditEmail(profile.email)
+                      setEditPhone(formatPhoneForMask(profile.phone ?? ''))
+                      setPhoneTouched(false)
+                      setEditError(null)
+                    }}
                     disabled={editSaving}
                   >
                     Отмена
@@ -416,7 +479,7 @@ export function ProfilePage() {
                 <button
                   type="button"
                   className={styles.primaryButton}
-                  onClick={() => setEditMode(true)}
+                  onClick={handleStartEditProfile}
                 >
                   Изменить данные
                 </button>

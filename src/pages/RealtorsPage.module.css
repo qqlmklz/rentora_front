@@ -1,0 +1,67 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  padding: 32px 16px 48px;
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111111;
+}
+
+.lead {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111111;
+}
+
+.text {
+  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  padding: 10px 22px;
+  background-color: #4a43ec;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+  box-shadow: 0 10px 24px rgba(74, 67, 236, 0.35);
+}
+
+.button:hover {
+  background-color: #3d37d0;
+  color: #ffffff;
+}
+
+.button:focus-visible {
+  outline: 2px solid #4a43ec;
+  outline-offset: 2px;
+}

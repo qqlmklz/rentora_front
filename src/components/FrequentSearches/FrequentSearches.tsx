@@ -1,4 +1,5 @@
 import type { FC, ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import styles from './frequentSearches.module.css'
 
 type FrequentItem = {
@@ -10,7 +11,7 @@ type FrequentItem = {
 const items: FrequentItem[] = [
   {
     label: 'Снять комнату',
-    href: '/catalog?propertyType=Комната',
+    href: '/catalog?category=residential&propertyType=room',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M5.55556 18H18.4444C20.4081 18 22 16.4081 22 14.4444V12C22 10.8954 21.1046 10 20 10C18.8954 10 18 10.8954 18 12V13.2C18 13.6418 17.6418 14 17.2 14H6.8C6.35817 14 6 13.6418 6 13.2V12C6 10.8954 5.10457 10 4 10C2.89543 10 2 10.8954 2 12V14.4444C2 16.4081 3.59188 18 5.55556 18Z" stroke="#4A43EC" strokeWidth="1.5" />
@@ -21,7 +22,7 @@ const items: FrequentItem[] = [
   },
   {
     label: 'Снять студию',
-    href: '/catalog?propertyType=Студия',
+    href: '/catalog?category=residential&propertyType=studio',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
@@ -36,7 +37,7 @@ const items: FrequentItem[] = [
   },
   {
     label: 'Снять склад',
-    href: '/catalog?propertyType=Склад',
+    href: '/catalog?category=commercial&propertyType=warehouse',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M11.9998 13.2999C11.8698 13.2999 11.7398 13.2699 11.6198 13.1999L2.78985 8.0899C2.42985 7.8799 2.30983 7.41987 2.51983 7.05987C2.72983 6.69987 3.17983 6.57985 3.54983 6.78985L11.9998 11.6799L20.3998 6.81988C20.7598 6.60988 21.2198 6.7399 21.4298 7.0899C21.6398 7.4499 21.5098 7.90987 21.1598 8.11987L12.3899 13.1999C12.2599 13.2599 12.1298 13.2999 11.9998 13.2999Z" fill="#4A43EC" />
@@ -48,7 +49,7 @@ const items: FrequentItem[] = [
   },
   {
     label: 'Снять помещение',
-    href: '/catalog?propertyType=Помещение',
+    href: '/catalog?category=commercial&propertyType=office',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M6.70001 18.75H4.15002C2.31002 18.75 1.25 17.69 1.25 15.85V4.15002C1.25 2.31002 2.31002 1.25 4.15002 1.25H8.45001C10.29 1.25 11.35 2.31002 11.35 4.15002V6C11.35 6.41 11.01 6.75 10.6 6.75C10.19 6.75 9.84998 6.41 9.84998 6V4.15002C9.84998 3.13002 9.47001 2.75 8.45001 2.75H4.15002C3.13002 2.75 2.75 3.13002 2.75 4.15002V15.85C2.75 16.87 3.13002 17.25 4.15002 17.25H6.70001C7.11001 17.25 7.45001 17.59 7.45001 18C7.45001 18.41 7.11001 18.75 6.70001 18.75Z" fill="#4A43EC" />
@@ -73,12 +74,12 @@ export const FrequentSearches: FC = () => {
 
       <div className={styles.grid}>
         {items.map((item) => (
-          <a key={item.href} href={item.href} className={styles.card}>
+          <Link key={item.href} to={item.href} className={styles.card}>
             <div className={styles.oftenItem}>
               {item.icon ?? null}
               <span className={styles.caption}>{item.label}</span>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </section>

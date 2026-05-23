@@ -138,9 +138,6 @@ export function ProfileFavoritesPage() {
           <Link to="/profile/documents" className={styles.sidebarLink}>
             Документы
           </Link>
-          <a href="/profile/settings" className={styles.sidebarLink}>
-            Настройки
-          </a>
         </nav>
       </aside>
 

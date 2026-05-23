@@ -14,8 +14,8 @@
   padding: 10px 28px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 185px;
+  justify-content: space-evenly;
+  gap: 32px;
 }
 
 .item {

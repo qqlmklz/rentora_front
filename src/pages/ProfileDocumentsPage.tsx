@@ -43,9 +43,6 @@ const sidebar = (
     <Link to="/profile/documents" className={styles.sidebarLinkActive}>
       Документы
     </Link>
-    <a href="/profile/settings" className={styles.sidebarLink}>
-      Настройки
-    </a>
   </>
 )
 

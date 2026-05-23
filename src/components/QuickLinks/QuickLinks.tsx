@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from 'react'
-import { FileText, Inbox, Settings, FolderOutput } from 'lucide-react'
+import { FileText, Inbox, FolderOutput } from 'lucide-react'
 import styles from './quickLinks.module.css'
 
 type LinkItem = {
@@ -23,11 +23,6 @@ const items: LinkItem[] = [
     label: 'Заявки',
     href: '/profile/requests',
     icon: <Inbox size={22} />,
-  },
-  {
-    label: 'Настройки',
-    href: '/profile/settings',
-    icon: <Settings size={22} />,
   },
 ]
 

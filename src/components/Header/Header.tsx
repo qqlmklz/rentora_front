@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Heart, MessageCircle, Menu } from 'lucide-react'
 import styles from './header.module.css'
 
@@ -14,9 +14,24 @@ type HeaderProps = {
   user?: HeaderUser | null
 }
 
+function navItemClass(base: string, active: string, isActive: boolean): string {
+  return `${base} ${isActive ? active : ''}`.trim()
+}
+
 export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
+  const location = useLocation()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const avatarRef = useRef<HTMLDivElement>(null)
+
+  const isServices =
+    location.pathname === '/services' || location.pathname.startsWith('/services/')
+  const isRealtors =
+    location.pathname === '/realtors' || location.pathname.startsWith('/realtors/')
+  const isCommercial =
+    location.pathname === '/catalog' &&
+    new URLSearchParams(location.search).get('category') === 'commercial'
+  const isCatalog = location.pathname === '/catalog' && !isCommercial
 
   useEffect(() => {
     if (!dropdownOpen) return
@@ -28,6 +43,10 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dropdownOpen])
+
+  useEffect(() => {
+    setMobileNavOpen(false)
+  }, [location.pathname, location.search])
 
   const handleLogout = () => {
     window.dispatchEvent(new CustomEvent('rentora:logout'))
@@ -47,18 +66,30 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
         </div>
 
         <nav className={styles.nav} aria-label="Основная навигация">
-          <Link to="/catalog" className={`${styles.navItem} ${styles.navItemActive}`}>
+          <Link
+            to="/catalog"
+            className={navItemClass(styles.navItem, styles.navItemActive, isCatalog)}
+          >
             Каталог
           </Link>
-          <Link to="/catalog?category=commercial" className={styles.navItem}>
+          <Link
+            to="/catalog?category=commercial"
+            className={navItemClass(styles.navItem, styles.navItemActive, isCommercial)}
+          >
             Коммерческая
           </Link>
-          <button type="button" className={styles.navItem}>
+          <Link
+            to="/services"
+            className={navItemClass(styles.navItem, styles.navItemActive, isServices)}
+          >
             Услуги
-          </button>
-          <button type="button" className={styles.navItem}>
+          </Link>
+          <Link
+            to="/realtors"
+            className={navItemClass(styles.navItem, styles.navItemActive, isRealtors)}
+          >
             Риелторы
-          </button>
+          </Link>
         </nav>
 
         <div className={styles.right}>
@@ -136,12 +167,47 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
           <button
             type="button"
             className={styles.menuButton}
-            aria-label="Открыть меню"
+            aria-label={mobileNavOpen ? 'Закрыть меню' : 'Открыть меню'}
+            aria-expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((v) => !v)}
           >
             <Menu size={20} />
           </button>
         </div>
       </div>
+
+      {mobileNavOpen ? (
+        <nav className={styles.mobileNav} aria-label="Мобильная навигация">
+          <Link
+            to="/catalog"
+            className={navItemClass(styles.mobileNavItem, styles.mobileNavItemActive, isCatalog)}
+            onClick={() => setMobileNavOpen(false)}
+          >
+            Каталог
+          </Link>
+          <Link
+            to="/catalog?category=commercial"
+            className={navItemClass(styles.mobileNavItem, styles.mobileNavItemActive, isCommercial)}
+            onClick={() => setMobileNavOpen(false)}
+          >
+            Коммерческая
+          </Link>
+          <Link
+            to="/services"
+            className={navItemClass(styles.mobileNavItem, styles.mobileNavItemActive, isServices)}
+            onClick={() => setMobileNavOpen(false)}
+          >
+            Услуги
+          </Link>
+          <Link
+            to="/realtors"
+            className={navItemClass(styles.mobileNavItem, styles.mobileNavItemActive, isRealtors)}
+            onClick={() => setMobileNavOpen(false)}
+          >
+            Риелторы
+          </Link>
+        </nav>
+      ) : null}
     </header>
   )
 }

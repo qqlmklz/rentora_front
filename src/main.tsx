@@ -13,6 +13,8 @@ import { ProfilePropertiesPage } from './pages/ProfilePropertiesPage'
 import { ProfileDocumentsPage } from './pages/ProfileDocumentsPage'
 import { ProfileRequestsPage } from './pages/ProfileRequestsPage'
 import { ChatsPage } from './pages/ChatsPage'
+import { RealtorsPage } from './pages/RealtorsPage'
+import { ServicesPage } from './pages/ServicesPage'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -20,6 +22,8 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/" element={<MainLayout><HomePage /></MainLayout>} />
         <Route path="/catalog" element={<MainLayout><CatalogPage /></MainLayout>} />
+        <Route path="/realtors" element={<MainLayout><RealtorsPage /></MainLayout>} />
+        <Route path="/services" element={<MainLayout><ServicesPage /></MainLayout>} />
         <Route path="/properties/new" element={<MainLayout><NewPropertyPage /></MainLayout>} />
         <Route path="/properties/:id/edit" element={<MainLayout><NewPropertyPage /></MainLayout>} />
         <Route path="/properties/:id" element={<MainLayout><PropertyPage /></MainLayout>} />
