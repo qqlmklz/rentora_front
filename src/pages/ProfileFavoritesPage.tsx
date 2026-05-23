@@ -1,33 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { EmptyState } from '../components/EmptyState/EmptyState'
+import { ProfileSidebar } from '../components/ProfileSidebar/ProfileSidebar'
+import { PropertyListingCard } from '../components/PropertyListingCard/PropertyListingCard'
+import { ROUTES } from '../constants/routes'
 import {
   fetchFavorites,
   deleteFavorite,
   FAVORITES_CHANGED_EVENT,
   type FavoriteProperty,
 } from '../services/favoritesApi'
+import { hasAuthToken } from '../utils/user'
 import styles from './ProfilePage.module.css'
 import favStyles from './ProfileFavoritesPage.module.css'
-
-function formatPrice(value: FavoriteProperty['price']): string | null {
-  if (value === null || value === undefined || value === '') return null
-  const num = typeof value === 'number' ? value : Number(String(value).replace(/\s/g, '').replace(',', '.'))
-  if (!Number.isFinite(num)) return String(value)
-  return new Intl.NumberFormat('ru-RU').format(num) + ' ₽'
-}
-
-function formatDetails(item: FavoriteProperty): string {
-  const parts: string[] = []
-  if (item.propertyType) parts.push(item.propertyType)
-  if (item.rooms !== null && item.rooms !== undefined && item.rooms !== '') parts.push(`${item.rooms} комн.`)
-  if (item.area !== null && item.area !== undefined && item.area !== '') parts.push(`${item.area} м²`)
-  return parts.join(' · ')
-}
-
-function formatLocation(item: FavoriteProperty): string | null {
-  const parts = [item.city, item.district].filter(Boolean) as string[]
-  return parts.length ? parts.join(' / ') : null
-}
 
 export function ProfileFavoritesPage() {
   const navigate = useNavigate()
@@ -38,15 +23,15 @@ export function ProfileFavoritesPage() {
   const [brokenPhotos, setBrokenPhotos] = useState<Record<string, boolean>>({})
 
   const silentReloadFavorites = useCallback(() => {
-    if (!localStorage.getItem('token')) return
+    if (!hasAuthToken()) return
     fetchFavorites()
       .then((data) => setItems(data))
       .catch(() => {})
   }, [])
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) {
-      navigate('/', { replace: true })
+    if (!hasAuthToken()) {
+      navigate(ROUTES.home, { replace: true })
       return
     }
     let cancelled = false
@@ -78,7 +63,7 @@ export function ProfileFavoritesPage() {
   const empty = useMemo(() => !loading && !error && items.length === 0, [loading, error, items.length])
 
   const handleOpen = (id: string) => {
-    navigate(`/properties/${encodeURIComponent(id)}`)
+    navigate(ROUTES.property(id))
   }
 
   const handleRemove = async (id: string) => {
@@ -123,21 +108,11 @@ export function ProfileFavoritesPage() {
     <div className={styles.root}>
       <aside className={styles.sidebar}>
         <nav className={styles.sidebarNav}>
-          <Link to="/profile" className={styles.sidebarLink}>
-            Профиль
-          </Link>
-          <Link to="/profile/favorites" className={styles.sidebarLinkActive}>
-            Избранное
-          </Link>
-          <Link to="/profile/properties" className={styles.sidebarLink}>
-            Мои объекты
-          </Link>
-          <Link to="/profile/requests" className={styles.sidebarLink}>
-            Заявки
-          </Link>
-          <Link to="/profile/documents" className={styles.sidebarLink}>
-            Документы
-          </Link>
+          <ProfileSidebar
+            active="favorites"
+            linkClassName={styles.sidebarLink}
+            activeLinkClassName={styles.sidebarLinkActive}
+          />
         </nav>
       </aside>
 
@@ -147,64 +122,33 @@ export function ProfileFavoritesPage() {
             <h1 className={styles.title}>Избранное</h1>
 
             {empty ? (
-              <p className={favStyles.empty}>У вас пока нет избранных объявлений</p>
+              <EmptyState>У вас пока нет избранных объявлений</EmptyState>
             ) : (
               <div className={favStyles.list}>
-                {items.map((item) => {
-                  const price = formatPrice(item.price)
-                  const details = formatDetails(item)
-                  const location = formatLocation(item)
-                  const photoOk = !!item.photoUrl && !brokenPhotos[item.id]
-
-                  return (
-                    <div
-                      key={item.id}
-                      className={favStyles.item}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleOpen(item.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') handleOpen(item.id)
-                      }}
-                      aria-label="Открыть объявление"
-                    >
-                      <div className={favStyles.photoWrap}>
-                        {photoOk ? (
-                          <img
-                            className={favStyles.photo}
-                            src={item.photoUrl ?? undefined}
-                            alt=""
-                            loading="lazy"
-                            onError={() => setBrokenPhotos((p) => ({ ...p, [item.id]: true }))}
-                          />
-                        ) : (
-                          <span className={favStyles.photoFallback}>Фото</span>
-                        )}
-                      </div>
-
-                      <div className={favStyles.meta}>
-                        {price && <p className={favStyles.price}>{price}</p>}
-                        <p className={favStyles.details}>{details || 'Объявление'}</p>
-                        {location && <p className={favStyles.location}>{location}</p>}
-                      </div>
-
-                      <div className={favStyles.actions}>
-                        <button
-                          type="button"
-                          className={favStyles.remove}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleRemove(item.id)
-                          }}
-                          disabled={removingId === item.id}
-                          aria-label="Удалить из избранного"
-                        >
-                          Удалить
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
+                {items.map((item) => (
+                  <PropertyListingCard
+                    key={item.id}
+                    item={item}
+                    variant="row"
+                    photoBroken={Boolean(brokenPhotos[item.id])}
+                    onPhotoError={() => setBrokenPhotos((p) => ({ ...p, [item.id]: true }))}
+                    onOpen={() => handleOpen(item.id)}
+                    actions={
+                      <button
+                        type="button"
+                        className={favStyles.remove}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemove(item.id)
+                        }}
+                        disabled={removingId === item.id}
+                        aria-label="Удалить из избранного"
+                      >
+                        Удалить
+                      </button>
+                    }
+                  />
+                ))}
               </div>
             )}
           </section>

@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Heart, MessageCircle, Menu } from 'lucide-react'
+import { ROUTES } from '../../constants/routes'
 import styles from './header.module.css'
 
 type HeaderUser = {
@@ -25,13 +26,13 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
   const avatarRef = useRef<HTMLDivElement>(null)
 
   const isServices =
-    location.pathname === '/services' || location.pathname.startsWith('/services/')
+    location.pathname === ROUTES.services || location.pathname.startsWith(`${ROUTES.services}/`)
   const isRealtors =
-    location.pathname === '/realtors' || location.pathname.startsWith('/realtors/')
+    location.pathname === ROUTES.realtors || location.pathname.startsWith(`${ROUTES.realtors}/`)
   const isCommercial =
-    location.pathname === '/catalog' &&
+    location.pathname === ROUTES.catalog &&
     new URLSearchParams(location.search).get('category') === 'commercial'
-  const isCatalog = location.pathname === '/catalog' && !isCommercial
+  const isCatalog = location.pathname === ROUTES.catalog && !isCommercial
 
   useEffect(() => {
     if (!dropdownOpen) return
@@ -60,32 +61,32 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
     <header className={styles.headerRoot}>
       <div className={styles.headerInner}>
         <div className={styles.left}>
-          <Link to="/" className={styles.logo} aria-label="rentora">
+          <Link to={ROUTES.home} className={styles.logo} aria-label="rentora">
             rentora
           </Link>
         </div>
 
         <nav className={styles.nav} aria-label="Основная навигация">
           <Link
-            to="/catalog"
+            to={ROUTES.catalog}
             className={navItemClass(styles.navItem, styles.navItemActive, isCatalog)}
           >
             Каталог
           </Link>
           <Link
-            to="/catalog?category=commercial"
+            to={ROUTES.catalogCommercial}
             className={navItemClass(styles.navItem, styles.navItemActive, isCommercial)}
           >
             Коммерческая
           </Link>
           <Link
-            to="/services"
+            to={ROUTES.services}
             className={navItemClass(styles.navItem, styles.navItemActive, isServices)}
           >
             Услуги
           </Link>
           <Link
-            to="/realtors"
+            to={ROUTES.realtors}
             className={navItemClass(styles.navItem, styles.navItemActive, isRealtors)}
           >
             Риелторы
@@ -93,11 +94,11 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
         </nav>
 
         <div className={styles.right}>
-          <Link to="/chats" className={styles.iconButton} aria-label="Сообщения">
+          <Link to={ROUTES.chats} className={styles.iconButton} aria-label="Сообщения">
             <MessageCircle size={20} />
           </Link>
           {user ? (
-            <Link to="/profile/favorites" className={styles.iconButton} aria-label="Избранное">
+            <Link to={ROUTES.profileFavorites} className={styles.iconButton} aria-label="Избранное">
               <Heart size={20} />
             </Link>
           ) : (
@@ -106,7 +107,7 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
             </button>
           )}
           {user ? (
-            <Link to="/properties/new" className={styles.secondaryButton}>
+            <Link to={ROUTES.propertyNew} className={styles.secondaryButton}>
               Разместить объявление
             </Link>
           ) : (
@@ -179,28 +180,28 @@ export const Header: FC<HeaderProps> = ({ onLoginClick, user }) => {
       {mobileNavOpen ? (
         <nav className={styles.mobileNav} aria-label="Мобильная навигация">
           <Link
-            to="/catalog"
+            to={ROUTES.catalog}
             className={navItemClass(styles.mobileNavItem, styles.mobileNavItemActive, isCatalog)}
             onClick={() => setMobileNavOpen(false)}
           >
             Каталог
           </Link>
           <Link
-            to="/catalog?category=commercial"
+            to={ROUTES.catalogCommercial}
             className={navItemClass(styles.mobileNavItem, styles.mobileNavItemActive, isCommercial)}
             onClick={() => setMobileNavOpen(false)}
           >
             Коммерческая
           </Link>
           <Link
-            to="/services"
+            to={ROUTES.services}
             className={navItemClass(styles.mobileNavItem, styles.mobileNavItemActive, isServices)}
             onClick={() => setMobileNavOpen(false)}
           >
             Услуги
           </Link>
           <Link
-            to="/realtors"
+            to={ROUTES.realtors}
             className={navItemClass(styles.mobileNavItem, styles.mobileNavItemActive, isRealtors)}
             onClick={() => setMobileNavOpen(false)}
           >

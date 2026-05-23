@@ -1,15 +1,7 @@
 import type { FC } from 'react'
+import { contractStatusLabel } from '../../constants/requests'
 import type { ChatContract } from '../../services/contractsApi'
 import styles from './ChatContractCard.module.css'
-
-function statusLabel(status: string): string {
-  const s = status.toLowerCase()
-  if (s === 'pending') return 'На согласовании'
-  if (s === 'accepted') return 'Принят'
-  if (s === 'rejected') return 'Отклонён'
-  if (s === 'terminated') return 'Расторгнут'
-  return status
-}
 
 type Props = {
   contract: ChatContract
@@ -35,7 +27,7 @@ export const ChatContractCard: FC<Props> = ({
     <div className={styles.card}>
       <div className={styles.header}>
         <span className={styles.title}>Договор аренды</span>
-        <span className={styles.badge}>{statusLabel(contract.status)}</span>
+        <span className={styles.badge}>{contractStatusLabel(contract.status)}</span>
       </div>
       <div className={styles.actions}>
         <button type="button" className={styles.btnOpen} onClick={onOpen}>

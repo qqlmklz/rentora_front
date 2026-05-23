@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import styles from './ProfilePage.module.css'
-import pageStyles from './ProfileRequestsPage.module.css'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ActiveArchiveTabs } from '../components/ActiveArchiveTabs/ActiveArchiveTabs'
+import { EmptyState } from '../components/EmptyState/EmptyState'
+import { ProfileSidebar } from '../components/ProfileSidebar/ProfileSidebar'
+import {
+  REQUEST_CATEGORY_OPTIONS,
+  type RequestCategory,
+} from '../constants/requests'
 import {
   createProfileRequest,
   fetchProfileRequests,
@@ -16,17 +21,16 @@ import {
   type ProfileRequestItem,
   type RequestPropertyOption,
 } from '../services/requestsApi'
-
-const REQUEST_CATEGORY_OPTIONS = [
-  { value: 'electrical', label: 'Электрика' },
-  { value: 'plumbing', label: 'Сантехника' },
-  { value: 'heating', label: 'Отопление' },
-  { value: 'appliance', label: 'Техника' },
-  { value: 'cleaning', label: 'Клининг' },
-  { value: 'other', label: 'Другое' },
-] as const
-
-type RequestCategory = (typeof REQUEST_CATEGORY_OPTIONS)[number]['value']
+import {
+  formatAddressParts,
+  formatCurrency,
+  formatDateTimeRu,
+} from '../utils/format'
+import { isRequestOwner, isRequestTenant } from '../utils/requestRoles'
+import { sortByCreatedAtDesc } from '../utils/sort'
+import { getCurrentUserId } from '../utils/user'
+import styles from './ProfilePage.module.css'
+import pageStyles from './ProfileRequestsPage.module.css'
 
 function statusLabel(status: string): string {
   const normalized = status.toLowerCase()
@@ -73,33 +77,8 @@ function categoryLabel(category: string | null): string {
   return found?.label ?? category ?? 'Не указана'
 }
 
-function formatExpenseAmount(value: number | null): string {
-  if (value === null || !Number.isFinite(value)) return '—'
-  return `${new Intl.NumberFormat('ru-RU').format(value)} ₽`
-}
-
-function formatRequestDate(raw: string | null): string {
-  if (!raw) return 'Дата не указана'
-  const d = new Date(raw)
-  if (Number.isNaN(d.getTime())) return raw
-  return new Intl.DateTimeFormat('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(d)
-}
-
 function formatPropertyAddress(item: ProfileRequestItem): string {
-  const parts = [item.property.address, item.property.city, item.property.district].filter(Boolean) as string[]
-  return parts.length ? parts.join(' / ') : '—'
-}
-
-function sortRequestsByCreatedAtDesc(items: ProfileRequestItem[]): ProfileRequestItem[] {
-  return [...items].sort(
-    (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
-  )
+  return formatAddressParts([item.property.address, item.property.city, item.property.district])
 }
 
 function formatPropertyLabel(option: RequestPropertyOption): string {
@@ -108,24 +87,12 @@ function formatPropertyLabel(option: RequestPropertyOption): string {
   return option.title || `Объявление #${option.id}`
 }
 
-const sidebar = (
-  <>
-    <Link to="/profile" className={styles.sidebarLink}>
-      Профиль
-    </Link>
-    <Link to="/profile/favorites" className={styles.sidebarLink}>
-      Избранное
-    </Link>
-    <Link to="/profile/properties" className={styles.sidebarLink}>
-      Мои объекты
-    </Link>
-    <Link to="/profile/requests" className={styles.sidebarLinkActive}>
-      Заявки
-    </Link>
-    <Link to="/profile/documents" className={styles.sidebarLink}>
-      Документы
-    </Link>
-  </>
+const profileSidebar = (
+  <ProfileSidebar
+    active="requests"
+    linkClassName={styles.sidebarLink}
+    activeLinkClassName={styles.sidebarLinkActive}
+  />
 )
 
 export function ProfileRequestsPage() {
@@ -149,6 +116,7 @@ export function ProfileRequestsPage() {
   const [decisionBusyId, setDecisionBusyId] = useState<string | null>(null)
   const [confirmBusyId, setConfirmBusyId] = useState<string | null>(null)
   const [ownerCompleteBusyId, setOwnerCompleteBusyId] = useState<string | null>(null)
+  const ownerCompleteInFlightRef = useRef<string | null>(null)
   const [expenseBusyId, setExpenseBusyId] = useState<string | null>(null)
   const [openExpenseForms, setOpenExpenseForms] = useState<Record<string, boolean>>({})
   const [expenseDrafts, setExpenseDrafts] = useState<
@@ -163,24 +131,14 @@ export function ProfileRequestsPage() {
   const [brokenRequestPhotos, setBrokenRequestPhotos] = useState<Record<string, boolean>>({})
   const [brokenExpensePhotos, setBrokenExpensePhotos] = useState<Record<string, boolean>>({})
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null)
-  const currentUserId = useMemo(() => {
-    try {
-      const raw = localStorage.getItem('user')
-      if (!raw) return null
-      const parsed = JSON.parse(raw) as Record<string, unknown>
-      const id = parsed.id ?? parsed._id ?? null
-      return id === null || id === undefined ? null : String(id)
-    } catch {
-      return null
-    }
-  }, [])
+  const currentUserId = useMemo(() => getCurrentUserId(), [])
 
   const applyRequestsPayload = useCallback((payload: ProfileRequestsResponse) => {
     setRequestsBundle({
-      activeRequests: sortRequestsByCreatedAtDesc(
+      activeRequests: sortByCreatedAtDesc(
         Array.isArray(payload.activeRequests) ? payload.activeRequests : [],
       ),
-      archivedRequests: sortRequestsByCreatedAtDesc(
+      archivedRequests: sortByCreatedAtDesc(
         Array.isArray(payload.archivedRequests) ? payload.archivedRequests : [],
       ),
     })
@@ -267,8 +225,8 @@ export function ProfileRequestsPage() {
   }, [selectedPropertyId, properties])
 
   const displayedItems = useMemo(() => {
-    const active = sortRequestsByCreatedAtDesc(requestsBundle.activeRequests)
-    const archived = sortRequestsByCreatedAtDesc(requestsBundle.archivedRequests)
+    const active = sortByCreatedAtDesc(requestsBundle.activeRequests)
+    const archived = sortByCreatedAtDesc(requestsBundle.archivedRequests)
     return listTab === 'active' ? active : archived
   }, [listTab, requestsBundle.activeRequests, requestsBundle.archivedRequests])
   const empty = useMemo(
@@ -333,14 +291,27 @@ export function ProfileRequestsPage() {
   }
 
   const handleCompleteOwnerRequest = (requestId: string) => {
+    if (ownerCompleteInFlightRef.current != null) return
+
+    ownerCompleteInFlightRef.current = requestId
     setActionError(null)
     setOwnerCompleteBusyId(requestId)
+
     completeOwnerRequest(requestId)
-      .then(() => refetchProfileRequests())
+      .then((result) => {
+        if (!result.ok) {
+          setActionError(result.message)
+          return
+        }
+        return refetchProfileRequests()
+      })
       .catch((e) => {
         setActionError(e instanceof Error ? e.message : 'Не удалось завершить заявку')
       })
-      .finally(() => setOwnerCompleteBusyId(null))
+      .finally(() => {
+        ownerCompleteInFlightRef.current = null
+        setOwnerCompleteBusyId(null)
+      })
   }
 
   const handleExpenseDraftChange = (
@@ -462,7 +433,7 @@ export function ProfileRequestsPage() {
     return (
       <div className={styles.root}>
         <aside className={styles.sidebar}>
-          <nav className={styles.sidebarNav}>{sidebar}</nav>
+          <nav className={styles.sidebarNav}>{profileSidebar}</nav>
         </aside>
         <main className={styles.main}>
           <div className={styles.container}>
@@ -476,7 +447,7 @@ export function ProfileRequestsPage() {
   return (
     <div className={styles.root}>
       <aside className={styles.sidebar}>
-        <nav className={styles.sidebarNav}>{sidebar}</nav>
+        <nav className={styles.sidebarNav}>{profileSidebar}</nav>
       </aside>
 
       <main className={styles.main}>
@@ -494,26 +465,12 @@ export function ProfileRequestsPage() {
               </button>
             </div>
 
-            <div className={pageStyles.tabsPrimary} role="tablist" aria-label="Список заявок">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={listTab === 'active'}
-                className={`${pageStyles.tabPrimary} ${listTab === 'active' ? pageStyles.tabPrimaryActive : ''}`.trim()}
-                onClick={() => setListTab('active')}
-              >
-                Активные
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={listTab === 'archive'}
-                className={`${pageStyles.tabPrimary} ${listTab === 'archive' ? pageStyles.tabPrimaryActive : ''}`.trim()}
-                onClick={() => setListTab('archive')}
-              >
-                Архив
-              </button>
-            </div>
+            <ActiveArchiveTabs
+              value={listTab}
+              onChange={setListTab}
+              archiveValue="archive"
+              ariaLabel="Список заявок"
+            />
 
             {error && (
               <p className={pageStyles.inlineError} role="alert">
@@ -527,14 +484,17 @@ export function ProfileRequestsPage() {
             )}
 
             {empty ? (
-              <p className={pageStyles.empty}>{emptyMessage}</p>
+              <EmptyState>{emptyMessage}</EmptyState>
             ) : (
               <div className={pageStyles.list}>
                 {displayedItems.map((item) => {
                   const isActiveListTab = listTab === 'active'
-                  const isTenant = String(currentUserId ?? '') === String(item.requesterId ?? '')
-                  const ownerId = item.propertyOwnerId ?? item.property?.ownerId
-                  const isOwner = String(currentUserId ?? '') === String(ownerId ?? '')
+                  const isTenant = isRequestTenant(currentUserId, item.requesterId)
+                  const isOwner = isRequestOwner(
+                    currentUserId,
+                    item.propertyOwnerId,
+                    item.property?.ownerId,
+                  )
                   const isOwnerCard = isOwner
                   const photoOk = !!item.property.photoUrl && !brokenPhotos[item.id]
                   const visibleRequestPhotos = item.requestPhotos
@@ -640,7 +600,7 @@ export function ProfileRequestsPage() {
                               Приоритет: {priorityLabel(item.priority)}
                             </span>
                           )}
-                          <span className={pageStyles.date}>{formatRequestDate(item.createdAt)}</span>
+                          <span className={pageStyles.date}>{formatDateTimeRu(item.createdAt)}</span>
                         </div>
                         {item.priorityStatus === 'ready' ? (
                           <p className={pageStyles.aiReason}>
@@ -653,7 +613,7 @@ export function ProfileRequestsPage() {
                         {showOwnerExpenseReview ? (
                           <>
                             <p className={pageStyles.extraMeta}>
-                              Сумма расходов: {formatExpenseAmount(item.expenseAmount)}
+                              Сумма расходов: {formatCurrency(item.expenseAmount)}
                             </p>
                             <p className={pageStyles.extraMeta}>
                               Комментарий по расходам: {item.expenseComment?.trim() || '—'}
@@ -687,7 +647,7 @@ export function ProfileRequestsPage() {
                               ))}
                             </div>
                             <p className={pageStyles.extraMeta}>
-                              Сумма: {formatExpenseAmount(item.expenseAmount)} · Комментарий:{' '}
+                              Сумма: {formatCurrency(item.expenseAmount)} · Комментарий:{' '}
                               {item.expenseComment?.trim() || '—'}
                             </p>
                           </div>
@@ -713,7 +673,7 @@ export function ProfileRequestsPage() {
                               className={pageStyles.btnDecision}
                               onClick={() => handleCompleteOwnerRequest(item.id)}
                               disabled={
-                                ownerCompleteBusyId === item.id ||
+                                ownerCompleteBusyId != null ||
                                 decisionBusyId === item.id ||
                                 confirmBusyId === item.id
                               }

@@ -1,0 +1,125 @@
+.cardGrid {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cardGrid:hover {
+  border-color: var(--color-primary-border);
+  box-shadow: 0 8px 28px var(--color-shadow);
+}
+
+.cardRow {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cardRow:hover {
+  border-color: var(--color-primary-border);
+  box-shadow: 0 8px 28px var(--color-shadow);
+}
+
+.photoWrap {
+  overflow: hidden;
+  background: var(--color-bg-page);
+}
+
+.cardGrid .photoWrap {
+  aspect-ratio: 4 / 3;
+}
+
+.cardRow .photoWrap {
+  width: 120px;
+  height: 90px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cardGrid .photo {
+  min-height: 140px;
+}
+
+.photoFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 90px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.body {
+  padding: 12px 14px;
+  min-width: 0;
+}
+
+.cardRow .body {
+  padding: 0;
+}
+
+.price {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.details,
+.location {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.location {
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-self: center;
+}
+
+@media (max-width: 640px) {
+  .cardRow {
+    grid-template-columns: 96px 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

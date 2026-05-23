@@ -3,7 +3,7 @@
   padding: 12px 14px;
   border-radius: 14px;
   background: #f0f4ff;
-  border: 1px solid rgba(74, 67, 236, 0.2);
+  border: 1px solid var(--color-primary-focus);
 }
 
 .header {
@@ -17,7 +17,7 @@
 .title {
   font-size: 15px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-strong);
   line-height: 1.35;
 }
 
@@ -25,7 +25,7 @@
   display: inline-block;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(74, 67, 236, 0.15);
+  background: var(--color-primary-muted);
   color: #3730a3;
   font-size: 12px;
   font-weight: 600;
@@ -40,9 +40,9 @@
 .btnOpen {
   padding: 8px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(74, 67, 236, 0.35);
-  background: #fff;
-  color: #4a43ec;
+  border: 1px solid var(--color-primary-border);
+  background: var(--color-bg-surface);
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -52,8 +52,8 @@
   padding: 8px 14px;
   border-radius: 12px;
   border: none;
-  background: #4a43ec;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -68,8 +68,8 @@
   padding: 8px 14px;
   border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.15);
-  background: #fff;
-  color: #4b5563;
+  background: var(--color-bg-surface);
+  color: var(--color-text-subtle);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;

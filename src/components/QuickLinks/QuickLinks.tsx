@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from 'react'
 import { FileText, Inbox, FolderOutput } from 'lucide-react'
+import { ROUTES } from '../../constants/routes'
 import styles from './quickLinks.module.css'
 
 type LinkItem = {
@@ -11,17 +12,17 @@ type LinkItem = {
 const items: LinkItem[] = [
   {
     label: 'Мои объекты',
-    href: '/profile/properties',
+    href: ROUTES.profileProperties,
     icon: <FolderOutput size={22} />,
   },
   {
     label: 'Документы',
-    href: '/profile/documents',
+    href: ROUTES.profileDocuments,
     icon: <FileText size={22} />,
   },
   {
     label: 'Заявки',
-    href: '/profile/requests',
+    href: ROUTES.profileRequests,
     icon: <Inbox size={22} />,
   },
 ]
@@ -40,4 +41,3 @@ export const QuickLinks: FC = () => {
     </nav>
   )
 }
-

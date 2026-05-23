@@ -11,18 +11,18 @@
   margin: 0 0 16px;
   font-size: 26px;
   font-weight: 700;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .pageLoading,
 .pageError {
   margin: 0;
   font-size: 15px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .pageError {
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .existingPhotos {
@@ -33,21 +33,21 @@
   margin: 0 0 10px;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .photosCountHint {
   font-weight: 400;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .card {
-  background: #ffffff;
+  background: var(--color-bg-surface);
   border-radius: 20px;
   padding: 20px 22px;
   margin-bottom: 16px;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 24px var(--color-border);
+  border: 1px solid var(--color-border);
   overflow: visible;
 }
 
@@ -55,7 +55,7 @@
   margin: 0 0 14px;
   font-size: 18px;
   font-weight: 600;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .grid {
@@ -81,7 +81,7 @@
   right: 0;
   z-index: 1000;
   margin-top: 6px;
-  background: #ffffff;
+  background: var(--color-bg-surface);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
@@ -91,7 +91,7 @@
 }
 
 .addressDropdownPortal {
-  background: #fff;
+  background: var(--color-bg-surface);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -103,8 +103,8 @@
   width: 100%;
   text-align: left;
   border: none;
-  background: #ffffff;
-  color: #111111;
+  background: var(--color-bg-surface);
+  color: var(--color-text);
   padding: 12px 14px;
   font-size: 14px;
   cursor: pointer;
@@ -127,9 +127,9 @@
   width: 100%;
   padding: 10px 12px;
   font-size: 14px;
-  color: #111111;
-  background-color: #f5f6fa;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  color: var(--color-text);
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-input);
   border-radius: 14px;
   font-family: inherit;
   transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
@@ -138,19 +138,19 @@
 .select:focus,
 .input:focus {
   outline: none;
-  border-color: #4a43ec;
-  background-color: #ffffff;
+  border-color: var(--color-primary);
+  background-color: var(--color-bg-surface);
   box-shadow: 0 0 0 2px rgba(74, 67, 236, 0.16);
 }
 
 .help {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .photosBox {
-  border: 2px dashed rgba(74, 67, 236, 0.35);
+  border: 2px dashed var(--color-primary-border);
   background: rgba(74, 67, 236, 0.04);
   border-radius: 20px;
   padding: 18px;
@@ -167,15 +167,15 @@
 .photosCount {
   margin: 0;
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .fileButton {
   border-radius: 18px;
   padding: 10px 16px;
   border: none;
-  background-color: #4a43ec;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-bg-surface);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -188,7 +188,7 @@
 }
 
 .fileButton:hover {
-  background-color: #3d37d0;
+  background-color: var(--color-primary-hover);
 }
 
 .fileButton:active {
@@ -202,7 +202,7 @@
 .rules {
   margin: 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   line-height: 1.4;
 }
 
@@ -219,7 +219,7 @@
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  background: #edeef3;
+  background: var(--color-bg-page);
 }
 
 .previewImg {
@@ -241,7 +241,7 @@
   border: none;
   border-radius: 50%;
   background: rgba(17, 24, 39, 0.65);
-  color: #fff;
+  color: var(--color-on-primary);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -264,7 +264,7 @@
   align-items: center;
   font-size: 14px;
   font-weight: 600;
-  color: #4a43ec;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -275,7 +275,7 @@
 .error {
   margin: 10px 0 0;
   font-size: 13px;
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .actions {
@@ -296,15 +296,15 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .submit {
   border-radius: 20px;
   padding: 12px 20px;
   border: none;
-  background-color: #4a43ec;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-bg-surface);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -317,7 +317,7 @@
 }
 
 .submit:hover:not(:disabled) {
-  background-color: #3d37d0;
+  background-color: var(--color-primary-hover);
 }
 
 @media (max-width: 767px) {

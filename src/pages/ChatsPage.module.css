@@ -24,7 +24,7 @@
   margin: 0 0 16px;
   font-size: 22px;
   font-weight: 700;
-  color: #111111;
+  color: var(--color-text);
   flex-shrink: 0;
 }
 
@@ -42,7 +42,7 @@
 .authGateText {
   margin: 0 0 20px;
   font-size: 15px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   line-height: 1.5;
   max-width: 360px;
 }
@@ -57,13 +57,13 @@
   min-height: min(520px, 100%);
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  background: #fff;
+  box-shadow: 0 8px 32px var(--color-shadow);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
 }
 
 .sidebar {
-  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  border-right: 1px solid var(--color-shadow);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -75,10 +75,10 @@
   padding: 14px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .list {
@@ -94,7 +94,7 @@
   padding: 24px 16px;
   text-align: center;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .listEmpty {
@@ -119,12 +119,12 @@
 }
 
 .chatRow:hover {
-  background: rgba(74, 67, 236, 0.06);
+  background: var(--color-primary-soft);
 }
 
 .chatRowActive {
-  background: rgba(74, 67, 236, 0.1);
-  border-left: 3px solid #4a43ec;
+  background: var(--color-primary-soft);
+  border-left: 3px solid var(--color-primary);
   padding-left: 11px;
 }
 
@@ -133,7 +133,7 @@
   height: 52px;
   border-radius: 14px;
   overflow: hidden;
-  background: #edeef3;
+  background: var(--color-bg-page);
   flex-shrink: 0;
 }
 
@@ -156,7 +156,7 @@
 .companionInitial {
   font-size: 1rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .chatMeta {
@@ -186,11 +186,11 @@
 }
 
 .chatRowUnread {
-  background: rgba(74, 67, 236, 0.07);
+  background: var(--color-primary-soft);
 }
 
 .chatRowUnread.chatRowActive {
-  background: rgba(74, 67, 236, 0.14);
+  background: var(--color-primary-soft);
 }
 
 .chatPreviewUnread {
@@ -203,8 +203,8 @@
   height: 18px;
   padding: 0 5px;
   border-radius: 999px;
-  background: #4a43ec;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font-size: 11px;
   font-weight: 700;
   line-height: 18px;
@@ -216,7 +216,7 @@
   margin: 0 0 2px;
   font-size: 14px;
   font-weight: 600;
-  color: #111111;
+  color: var(--color-text);
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -226,7 +226,7 @@
 .chatPeer {
   margin: 0 0 4px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -235,7 +235,7 @@
 .chatPreview {
   margin: 0;
   font-size: 13px;
-  color: #4b5563;
+  color: var(--color-text-subtle);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -255,12 +255,12 @@
   height: 100%;
   max-height: 100%;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--color-bg-surface);
 }
 
 .threadHeader {
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -280,9 +280,9 @@
   flex-shrink: 0;
   padding: 8px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(74, 67, 236, 0.35);
-  background: #fff;
-  color: #4a43ec;
+  border: 1px solid var(--color-primary-border);
+  background: var(--color-bg-surface);
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -308,13 +308,13 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .threadHeaderSub {
   margin: 4px 0 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .threadBody {
@@ -373,14 +373,14 @@
 .bubbleOther {
   align-self: flex-start;
   background: #f3f4f6;
-  color: #111111;
+  color: var(--color-text);
   border-bottom-left-radius: 6px;
 }
 
 .bubbleMine {
   align-self: flex-end;
-  background: #4a43ec;
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-bg-surface);
   border-bottom-right-radius: 6px;
 }
 
@@ -397,14 +397,14 @@
   align-items: center;
   justify-content: center;
   padding: 32px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 15px;
   text-align: center;
 }
 
 .composer {
   padding: 12px 16px 16px;
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  border-top: 1px solid var(--color-border);
   display: flex;
   gap: 10px;
   align-items: flex-end;
@@ -418,7 +418,7 @@
   max-height: 120px;
   padding: 10px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--color-border-input);
   font-size: 14px;
   font-family: inherit;
   resize: vertical;
@@ -427,15 +427,15 @@
 
 .textarea:focus {
   outline: none;
-  border-color: rgba(74, 67, 236, 0.45);
-  box-shadow: 0 0 0 3px rgba(74, 67, 236, 0.12);
+  border-color: var(--color-primary-border);
+  box-shadow: 0 0 0 3px var(--color-primary-muted);
 }
 
 .sendBtn {
   padding: 10px 18px;
   border-radius: 14px;
-  background: #4a43ec;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -444,7 +444,7 @@
 }
 
 .sendBtn:hover:not(:disabled) {
-  background: #3d37d0;
+  background: var(--color-primary-hover);
 }
 
 .sendBtn:disabled {
@@ -456,8 +456,8 @@
   margin-bottom: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(220, 38, 38, 0.08);
-  color: #b91c1c;
+  background: var(--color-error-bg);
+  color: var(--color-error-dark);
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -474,7 +474,7 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: #4a43ec;
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -483,11 +483,11 @@
 }
 
 .backBtn:hover {
-  background: rgba(74, 67, 236, 0.08);
+  background: var(--color-primary-soft);
 }
 
 .backBtn:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 

@@ -804,8 +804,37 @@ export async function confirmRequestExpense(requestId: string): Promise<ProfileR
   return normalizeRequestItem(data) ?? normalizeRequestItem(rawRequest) ?? null
 }
 
+export type CompleteOwnerRequestResult =
+  | { ok: true; request: ProfileRequestItem | null; alreadyCompleted?: boolean }
+  | { ok: false; message: string }
+
+async function readApiErrorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const data = await res.json()
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const record = data as Record<string, unknown>
+      const message = record.message ?? record.error
+      if (typeof message === 'string' && message.trim()) return message.trim()
+    }
+  } catch {
+    /* fall through */
+  }
+  const text = await res.text().catch(() => '')
+  return text.trim() || fallback
+}
+
+function isRequestAlreadyCompletedError(status: number, message: string): boolean {
+  if (status !== 400) return false
+  const normalized = message.toLowerCase()
+  return (
+    normalized.includes('уже заверш') ||
+    normalized.includes('already completed') ||
+    normalized.includes('already complete')
+  )
+}
+
 /** Владелец завершает заявку при сценарии resolution_type === owner (ожидается status completed). */
-export async function completeOwnerRequest(requestId: string): Promise<ProfileRequestItem | null> {
+export async function completeOwnerRequest(requestId: string): Promise<CompleteOwnerRequestResult> {
   const url = getProfileUrl(`/api/requests/${encodeURIComponent(requestId)}/complete-owner-request`)
   console.log('[Requests API] complete owner request:', { requestId, url, method: 'POST' })
   const res = await fetch(url, {
@@ -822,12 +851,24 @@ export async function completeOwnerRequest(requestId: string): Promise<ProfileRe
     status: res.status,
     body: responseBody,
   })
-  if (!res.ok) {
-    throw new Error(await res.text().catch(() => `Не удалось завершить заявку: ${res.status}`))
+
+  if (res.ok) {
+    const data = responseBody
+    const request =
+      data && typeof data === 'object'
+        ? normalizeRequestItem(data) ??
+          normalizeRequestItem((data as Record<string, unknown>).request) ??
+          null
+        : null
+    return { ok: true, request }
   }
-  const data = await res.json().catch(() => null)
-  if (!data) return null
-  return normalizeRequestItem(data) ?? normalizeRequestItem((data as Record<string, unknown>).request) ?? null
+
+  const message = await readApiErrorMessage(res, `Не удалось завершить заявку: ${res.status}`)
+  if (isRequestAlreadyCompletedError(res.status, message)) {
+    return { ok: true, request: null, alreadyCompleted: true }
+  }
+
+  return { ok: false, message }
 }
 
 export async function fetchRequestPropertyOptions(): Promise<RequestPropertyOption[]> {

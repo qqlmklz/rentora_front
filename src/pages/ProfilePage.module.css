@@ -7,7 +7,7 @@
   margin-top: 10px;
   width: 240px;
   flex-shrink: 0;
-  background-color: #4a43ec;
+  background-color: var(--color-primary);
   border-radius: 0 24px 24px 0;
   padding: 24px 0;
 }
@@ -30,12 +30,12 @@
 
 .sidebarLink:hover,
 .sidebarLinkActive:hover {
-  color: #fff;
+  color: var(--color-on-primary);
   background-color: rgba(255, 255, 255, 0.12);
 }
 
 .sidebarLinkActive {
-  color: #fff;
+  color: var(--color-on-primary);
   background-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -55,34 +55,34 @@
   margin: 0;
   padding: 24px;
   text-align: center;
-  color: #4b5563;
+  color: var(--color-text-subtle);
 }
 
 .error {
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .card {
-  background: #ffffff;
+  background: var(--color-bg-surface);
   border-radius: 20px;
   padding: 24px 28px;
   margin-bottom: 24px;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 24px var(--color-border);
+  border: 1px solid var(--color-border);
 }
 
 .title {
   margin: 0 0 20px;
   font-size: 22px;
   font-weight: 700;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .sectionTitle {
   margin: 0 0 16px;
   font-size: 18px;
   font-weight: 600;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .avatarRow {
@@ -94,7 +94,7 @@
   height: 96px;
   border-radius: 50%;
   overflow: hidden;
-  background-color: #edeef3;
+  background-color: var(--color-bg-page);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,7 +110,7 @@
 .avatarFallback {
   font-size: 36px;
   font-weight: 600;
-  color: #4a43ec;
+  color: var(--color-primary);
 }
 
 .avatarActions {
@@ -126,8 +126,8 @@
   justify-content: center;
   padding: 8px 16px;
   border-radius: 20px;
-  background-color: #4a43ec;
-  color: #fff;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -135,7 +135,7 @@
 }
 
 .avatarButton:hover {
-  background-color: #3d37d0;
+  background-color: var(--color-primary-hover);
 }
 
 .avatarInput {
@@ -148,9 +148,9 @@
 .avatarDelete {
   padding: 8px 16px;
   border-radius: 20px;
-  border: 1px solid #4a43ec;
-  background: #fff;
-  color: #4a43ec;
+  border: 1px solid var(--color-primary);
+  background: var(--color-bg-surface);
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -158,8 +158,8 @@
 }
 
 .avatarDelete:hover {
-  background-color: #4a43ec;
-  color: #fff;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
 }
 
 .avatarDelete:disabled {
@@ -182,13 +182,13 @@
 .infoLabel {
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
   min-width: 100px;
 }
 
 .infoValue {
   font-size: 15px;
-  color: #111827;
+  color: var(--color-text-strong);
 }
 
 .form,
@@ -204,7 +204,7 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary);
   margin-bottom: 6px;
 }
 
@@ -214,22 +214,22 @@
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.15);
-  background-color: #f5f6fa;
+  background-color: var(--color-bg-subtle);
   font-size: 14px;
-  color: #111827;
+  color: var(--color-text-strong);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .input:focus {
-  border-color: #4a43ec;
-  box-shadow: 0 0 0 2px rgba(74, 67, 236, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-focus);
 }
 
 .fieldError {
   margin: 0 0 10px;
   font-size: 13px;
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .actions {
@@ -243,8 +243,8 @@
   padding: 10px 20px;
   border-radius: 20px;
   border: none;
-  background-color: #4a43ec;
-  color: #fff;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -252,7 +252,7 @@
 }
 
 .primaryButton:hover {
-  background-color: #3d37d0;
+  background-color: var(--color-primary-hover);
 }
 
 .primaryButton:disabled {
@@ -263,9 +263,9 @@
 .secondaryButton {
   padding: 10px 20px;
   border-radius: 20px;
-  border: 2px solid #4a43ec;
-  background: #fff;
-  color: #4a43ec;
+  border: 2px solid var(--color-primary);
+  background: var(--color-bg-surface);
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -273,8 +273,8 @@
 }
 
 .secondaryButton:hover {
-  background-color: #4a43ec;
-  color: #fff;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
 }
 
 .secondaryButton:disabled {

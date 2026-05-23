@@ -18,7 +18,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 700;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .contentRow {
@@ -28,11 +28,11 @@
 }
 
 .filtersCard {
-  background: #ffffff;
+  background: var(--color-bg-surface);
   border-radius: 20px;
   padding: 16px 20px;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 24px var(--color-border);
+  border: 1px solid var(--color-border);
 }
 
 .filtersForm {
@@ -61,9 +61,9 @@
   width: 100%;
   padding: 9px 10px;
   font-size: 14px;
-  color: #111111;
-  background-color: #f5f6fa;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  color: var(--color-text);
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-input);
   border-radius: 12px;
   font-family: inherit;
   transition: border-color 0.15s ease, background-color 0.15s ease;
@@ -71,14 +71,14 @@
 
 .select:hover:not(:disabled),
 .input:hover {
-  border-color: rgba(74, 67, 236, 0.3);
+  border-color: var(--color-primary-border);
 }
 
 .select:focus,
 .input:focus {
   outline: none;
-  border-color: #4a43ec;
-  background-color: #ffffff;
+  border-color: var(--color-primary);
+  background-color: var(--color-bg-surface);
 }
 
 .select:disabled,
@@ -107,11 +107,11 @@
 }
 
 .listCard {
-  background: #ffffff;
+  background: var(--color-bg-surface);
   border-radius: 20px;
   padding: 18px 20px 22px;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 24px var(--color-border);
+  border: 1px solid var(--color-border);
 }
 
 .listHeader {
@@ -125,13 +125,13 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .listInfo {
   margin: 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .grid {
@@ -142,9 +142,9 @@
 
 .card {
   border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--color-border);
   overflow: hidden;
-  background: #ffffff;
+  background: var(--color-bg-surface);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -152,8 +152,8 @@
 }
 
 .card:hover {
-  border-color: rgba(74, 67, 236, 0.4);
-  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+  border-color: var(--color-primary-shadow);
+  box-shadow: 0 8px 28px var(--color-shadow);
   transform: translateY(-1px);
 }
 
@@ -161,7 +161,7 @@
   position: relative;
   width: 100%;
   padding-top: 64%;
-  background: #edeef3;
+  background: var(--color-bg-page);
 }
 
 .cardImage {
@@ -179,7 +179,7 @@
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .cardBody {
@@ -190,14 +190,14 @@
   margin: 0 0 4px;
   font-size: 16px;
   font-weight: 700;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .cardTitle {
   margin: 0 0 4px;
   font-size: 14px;
   font-weight: 600;
-  color: #111111;
+  color: var(--color-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -206,13 +206,13 @@
 .meta {
   margin: 0;
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .location {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .empty,
@@ -221,11 +221,11 @@
   margin: 0;
   padding: 8px 0;
   font-size: 14px;
-  color: #4b5563;
+  color: var(--color-text-subtle);
 }
 
 .error {
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 @media (max-width: 1023px) {

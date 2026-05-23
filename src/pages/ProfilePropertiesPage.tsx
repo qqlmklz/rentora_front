@@ -1,55 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { ActiveArchiveTabs } from '../components/ActiveArchiveTabs/ActiveArchiveTabs'
+import { EmptyState } from '../components/EmptyState/EmptyState'
+import { ProfileSidebar } from '../components/ProfileSidebar/ProfileSidebar'
+import { PropertyListingCard } from '../components/PropertyListingCard/PropertyListingCard'
+import { ROUTES } from '../constants/routes'
 import {
   fetchProfileProperties,
   deleteUserProperty,
   type ProfilePropertyItem,
 } from '../services/profilePropertiesApi'
+import { hasAuthToken } from '../utils/user'
 import styles from './ProfilePage.module.css'
 import pageStyles from './ProfilePropertiesPage.module.css'
 
-function formatPrice(value: ProfilePropertyItem['price']): string | null {
-  if (value === null || value === undefined || value === '') return null
-  const num = typeof value === 'number' ? value : Number(String(value).replace(/\s/g, '').replace(',', '.'))
-  if (!Number.isFinite(num)) return String(value)
-  return new Intl.NumberFormat('ru-RU').format(num) + ' ₽'
-}
-
-function formatDetails(item: ProfilePropertyItem): string {
-  const parts: string[] = []
-  if (item.propertyType) parts.push(item.propertyType)
-  if (item.rooms !== null && item.rooms !== undefined && item.rooms !== '') {
-    parts.push(`${item.rooms} комн.`)
-  }
-  if (item.totalArea !== null && item.totalArea !== undefined && item.totalArea !== '') {
-    parts.push(`${item.totalArea} м²`)
-  }
-  return parts.join(' · ')
-}
-
-function formatLocation(item: ProfilePropertyItem): string | null {
-  const loc = [item.city, item.district].filter(Boolean) as string[]
-  return loc.length ? loc.join(' / ') : null
-}
-
-const sidebar = (
-  <>
-    <Link to="/profile" className={styles.sidebarLink}>
-      Профиль
-    </Link>
-    <Link to="/profile/favorites" className={styles.sidebarLink}>
-      Избранное
-    </Link>
-    <Link to="/profile/properties" className={styles.sidebarLinkActive}>
-      Мои объекты
-    </Link>
-    <Link to="/profile/requests" className={styles.sidebarLink}>
-      Заявки
-    </Link>
-    <Link to="/profile/documents" className={styles.sidebarLink}>
-      Документы
-    </Link>
-  </>
+const profileSidebar = (
+  <ProfileSidebar
+    active="properties"
+    linkClassName={styles.sidebarLink}
+    activeLinkClassName={styles.sidebarLinkActive}
+  />
 )
 
 export function ProfilePropertiesPage() {
@@ -63,7 +33,7 @@ export function ProfilePropertiesPage() {
   const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(() => {
-    if (!localStorage.getItem('token')) return
+    if (!hasAuthToken()) return
     setLoading(true)
     setError(null)
     fetchProfileProperties()
@@ -75,7 +45,7 @@ export function ProfilePropertiesPage() {
   }, [])
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) {
+    if (!hasAuthToken()) {
       navigate('/', { replace: true })
       return
     }
@@ -95,11 +65,11 @@ export function ProfilePropertiesPage() {
 
   const handleEdit = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    navigate(`/properties/${encodeURIComponent(id)}/edit`)
+    navigate(ROUTES.propertyEdit(id))
   }
 
   const handleOpen = (id: string) => {
-    navigate(`/properties/${encodeURIComponent(id)}`)
+    navigate(ROUTES.property(id))
   }
 
   const confirmDelete = async () => {
@@ -120,7 +90,7 @@ export function ProfilePropertiesPage() {
     return (
       <div className={styles.root}>
         <aside className={styles.sidebar}>
-          <nav className={styles.sidebarNav}>{sidebar}</nav>
+          <nav className={styles.sidebarNav}>{profileSidebar}</nav>
         </aside>
         <main className={styles.main}>
           <div className={styles.container}>
@@ -135,7 +105,7 @@ export function ProfilePropertiesPage() {
     return (
       <div className={styles.root}>
         <aside className={styles.sidebar}>
-          <nav className={styles.sidebarNav}>{sidebar}</nav>
+          <nav className={styles.sidebarNav}>{profileSidebar}</nav>
         </aside>
         <main className={styles.main}>
           <div className={styles.container}>
@@ -149,33 +119,19 @@ export function ProfilePropertiesPage() {
   return (
     <div className={styles.root}>
       <aside className={styles.sidebar}>
-        <nav className={styles.sidebarNav}>{sidebar}</nav>
+        <nav className={styles.sidebarNav}>{profileSidebar}</nav>
       </aside>
 
       <main className={styles.main}>
         <div className={styles.container}>
           <section className={styles.card}>
             <h1 className={styles.title}>Мои объекты</h1>
-            <div className={pageStyles.tabsPrimary} role="tablist" aria-label="Список объявлений владельца">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={listTab === 'active'}
-                className={`${pageStyles.tabPrimary} ${listTab === 'active' ? pageStyles.tabPrimaryActive : ''}`.trim()}
-                onClick={() => setListTab('active')}
-              >
-                Активные
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={listTab === 'archived'}
-                className={`${pageStyles.tabPrimary} ${listTab === 'archived' ? pageStyles.tabPrimaryActive : ''}`.trim()}
-                onClick={() => setListTab('archived')}
-              >
-                Архив
-              </button>
-            </div>
+            <ActiveArchiveTabs
+              value={listTab}
+              onChange={setListTab}
+              archiveValue="archived"
+              ariaLabel="Список объявлений владельца"
+            />
 
             {error && (
               <p className={pageStyles.inlineError} role="alert">
@@ -184,53 +140,23 @@ export function ProfilePropertiesPage() {
             )}
 
             {empty ? (
-              <p className={pageStyles.empty}>
+              <EmptyState>
                 {listTab === 'active'
                   ? 'У вас пока нет активных объявлений'
                   : 'В архиве пока нет объявлений'}
-              </p>
+              </EmptyState>
             ) : (
               <div className={pageStyles.list}>
-                {displayedItems.map((item) => {
-                  const price = formatPrice(item.price)
-                  const details = formatDetails(item)
-                  const location = formatLocation(item)
-                  const photoOk = !!item.photoUrl && !brokenPhotos[item.id]
-
-                  return (
-                    <div
-                      key={item.id}
-                      className={pageStyles.item}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleOpen(item.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') handleOpen(item.id)
-                      }}
-                      aria-label="Открыть объявление"
-                    >
-                      <div className={pageStyles.photoWrap}>
-                        {photoOk ? (
-                          <img
-                            className={pageStyles.photo}
-                            src={item.photoUrl ?? undefined}
-                            alt=""
-                            loading="lazy"
-                            onError={() => setBrokenPhotos((p) => ({ ...p, [item.id]: true }))}
-                          />
-                        ) : (
-                          <span className={pageStyles.photoFallback}>Фото</span>
-                        )}
-                      </div>
-
-                      <div className={pageStyles.meta}>
-                        <p className={pageStyles.cardTitle}>{item.title || 'Без названия'}</p>
-                        {price && <p className={pageStyles.price}>{price}</p>}
-                        <p className={pageStyles.details}>{details || 'Объявление'}</p>
-                        {location && <p className={pageStyles.location}>{location}</p>}
-                      </div>
-
-                      <div className={pageStyles.actions}>
+                {displayedItems.map((item) => (
+                  <PropertyListingCard
+                    key={item.id}
+                    item={item}
+                    variant="row"
+                    photoBroken={Boolean(brokenPhotos[item.id])}
+                    onPhotoError={() => setBrokenPhotos((p) => ({ ...p, [item.id]: true }))}
+                    onOpen={() => handleOpen(item.id)}
+                    actions={
+                      <>
                         <button
                           type="button"
                           className={pageStyles.btnEdit}
@@ -248,10 +174,10 @@ export function ProfilePropertiesPage() {
                         >
                           Удалить
                         </button>
-                      </div>
-                    </div>
-                  )
-                })}
+                      </>
+                    }
+                  />
+                ))}
               </div>
             )}
           </section>

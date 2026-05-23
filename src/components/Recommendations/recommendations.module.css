@@ -17,7 +17,7 @@
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .grid {
@@ -29,8 +29,8 @@
 .card,
 .cardSkeleton {
   border-radius: 16px;
-  background-color: #ffffff;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  background-color: var(--color-bg-surface);
+  box-shadow: 0 10px 30px var(--color-shadow);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -38,14 +38,14 @@
 }
 
 .card {
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--color-border);
   cursor: pointer;
   transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
 }
 
 .card:hover {
-  border-color: rgba(74, 67, 236, 0.4);
-  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+  border-color: var(--color-primary-shadow);
+  box-shadow: 0 8px 28px var(--color-shadow);
   transform: translateY(-1px);
 }
 
@@ -116,7 +116,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #edeef3;
+  background: var(--color-bg-page);
   color: #9ca3af;
   font-size: 13px;
 }
@@ -137,7 +137,7 @@
 .price {
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-strong);
 }
 
 .priceMuted {
@@ -147,12 +147,12 @@
 
 .meta {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .location {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--color-text-subtle);
 }
 
 .empty {
@@ -160,7 +160,7 @@
   padding: 16px 14px;
   border-radius: 14px;
   background: #f3f4f6;
-  color: #4b5563;
+  color: var(--color-text-subtle);
   font-size: 14px;
 }
 

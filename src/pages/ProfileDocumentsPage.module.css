@@ -1,15 +1,15 @@
 .subtitle {
   margin: -8px 0 16px;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .inlineError {
   margin: 0 0 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(220, 38, 38, 0.08);
-  color: #b91c1c;
+  background: var(--color-error-bg);
+  color: var(--color-error-dark);
   font-size: 14px;
 }
 
@@ -26,7 +26,7 @@
 .empty {
   margin: 0;
   font-size: 15px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .list {
@@ -46,7 +46,7 @@
   align-items: start;
   padding: 14px 16px;
   border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--color-shadow);
   background: #fafbfc;
 }
 
@@ -61,13 +61,13 @@
 .itemTitle {
   font-size: 15px;
   font-weight: 600;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .badge {
   padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(74, 67, 236, 0.12);
+  background: var(--color-primary-muted);
   color: #3730a3;
   font-size: 11px;
   font-weight: 600;
@@ -81,7 +81,7 @@
 .itemMeta {
   grid-column: 1 / -1;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .itemActions {
@@ -96,9 +96,9 @@
 .btnOpen {
   padding: 8px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(74, 67, 236, 0.35);
-  background: #fff;
-  color: #4a43ec;
+  border: 1px solid var(--color-primary-border);
+  background: var(--color-bg-surface);
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -110,8 +110,8 @@
   padding: 8px 14px;
   border-radius: 12px;
   border: 1px solid rgba(185, 28, 28, 0.35);
-  background: #fff;
-  color: #b91c1c;
+  background: var(--color-bg-surface);
+  color: var(--color-error-dark);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;

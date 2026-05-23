@@ -7,7 +7,20 @@ export type CatalogFilters = {
   priceFrom?: string
   priceTo?: string
   location?: string
+  /** UI + URL; `cheapest` / `expensive` сортируются на клиенте, в API не уходят */
   sort?: string
+}
+
+/** Значения sort только для клиента (бэкенд их не принимает). */
+const CLIENT_ONLY_SORT = new Set(['cheapest', 'expensive'])
+
+function filtersForApi(filters: CatalogFilters): CatalogFilters {
+  const sort = filters.sort?.trim()
+  if (!sort || CLIENT_ONLY_SORT.has(sort)) {
+    const { sort: _omit, ...rest } = filters
+    return rest
+  }
+  return filters
 }
 
 export type CatalogItem = {
@@ -42,14 +55,15 @@ function resolveAssetUrl(value?: string | null): string | null {
 export async function fetchCatalog(filters: CatalogFilters): Promise<CatalogItem[]> {
   const base = getApiBase()
   const url = new URL((base || '') + '/api/properties', base || window.location.origin)
+  const apiFilters = filtersForApi(filters)
 
-  Object.entries(filters).forEach(([key, value]) => {
+  Object.entries(apiFilters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
       url.searchParams.set(key, String(value))
     }
   })
 
-  console.log('[Catalog API] request filters:', filters)
+  console.log('[Catalog API] request filters:', apiFilters)
   console.log('[Catalog API] request URL:', url.toString())
 
   const res = await fetch(url.toString(), {

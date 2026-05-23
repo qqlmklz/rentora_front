@@ -1,22 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { ContractViewModal } from '../components/ContractViewModal/ContractViewModal'
+import { EmptyState } from '../components/EmptyState/EmptyState'
+import { ProfileSidebar } from '../components/ProfileSidebar/ProfileSidebar'
+import { contractStatusLabel } from '../constants/requests'
 import { fetchContract, terminateContract, type ChatContract } from '../services/contractsApi'
 import { fetchProfileDocuments, type ProfileDocumentItem } from '../services/documentsApi'
-import { ContractViewModal } from '../components/ContractViewModal/ContractViewModal'
 import styles from './ProfilePage.module.css'
 import pageStyles from './ProfileDocumentsPage.module.css'
 
 const TERMINATE_CONFIRM =
   'Вы уверены, что хотите расторгнуть договор?'
-
-function statusLabel(status: string): string {
-  const s = status.toLowerCase()
-  if (s === 'pending') return 'На согласовании'
-  if (s === 'accepted') return 'Принят'
-  if (s === 'rejected') return 'Отклонён'
-  if (s === 'terminated') return 'Расторгнут'
-  return status
-}
 
 function isAcceptedStatus(status: string): boolean {
   return status.toLowerCase() === 'accepted'
@@ -26,24 +20,12 @@ function isTerminatedStatus(status: string): boolean {
   return status.toLowerCase() === 'terminated'
 }
 
-const sidebar = (
-  <>
-    <Link to="/profile" className={styles.sidebarLink}>
-      Профиль
-    </Link>
-    <Link to="/profile/favorites" className={styles.sidebarLink}>
-      Избранное
-    </Link>
-    <Link to="/profile/properties" className={styles.sidebarLink}>
-      Мои объекты
-    </Link>
-    <Link to="/profile/requests" className={styles.sidebarLink}>
-      Заявки
-    </Link>
-    <Link to="/profile/documents" className={styles.sidebarLinkActive}>
-      Документы
-    </Link>
-  </>
+const profileSidebar = (
+  <ProfileSidebar
+    active="documents"
+    linkClassName={styles.sidebarLink}
+    activeLinkClassName={styles.sidebarLinkActive}
+  />
 )
 
 export function ProfileDocumentsPage() {
@@ -152,7 +134,7 @@ export function ProfileDocumentsPage() {
     return (
       <div className={styles.root}>
         <aside className={styles.sidebar}>
-          <nav className={styles.sidebarNav}>{sidebar}</nav>
+          <nav className={styles.sidebarNav}>{profileSidebar}</nav>
         </aside>
         <main className={styles.main}>
           <div className={styles.container}>
@@ -166,7 +148,7 @@ export function ProfileDocumentsPage() {
   return (
     <div className={styles.root}>
       <aside className={styles.sidebar}>
-        <nav className={styles.sidebarNav}>{sidebar}</nav>
+        <nav className={styles.sidebarNav}>{profileSidebar}</nav>
       </aside>
 
       <main className={styles.main}>
@@ -194,7 +176,7 @@ export function ProfileDocumentsPage() {
             )}
 
             {empty ? (
-              <p className={pageStyles.empty}>Пока нет документов</p>
+              <EmptyState>Пока нет документов</EmptyState>
             ) : (
               <ul className={pageStyles.list}>
                 {items.map((doc) => {
@@ -209,7 +191,7 @@ export function ProfileDocumentsPage() {
                         <span
                           className={`${pageStyles.badge} ${terminated ? pageStyles.badgeTerminated : ''}`}
                         >
-                          {statusLabel(doc.status)}
+                          {contractStatusLabel(doc.status)}
                         </span>
                       </div>
                       <div className={pageStyles.itemActions}>

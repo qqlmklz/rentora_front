@@ -7,6 +7,41 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Brand */
+  --color-primary: #4a43ec;
+  --color-primary-hover: #3d37d0;
+  --color-primary-soft: rgba(74, 67, 236, 0.08);
+  --color-primary-muted: rgba(74, 67, 236, 0.12);
+  --color-primary-border: rgba(74, 67, 236, 0.35);
+  --color-primary-focus: rgba(74, 67, 236, 0.2);
+  --color-primary-shadow: rgba(74, 67, 236, 0.4);
+
+  /* Surfaces */
+  --color-bg-page: #edeef3;
+  --color-bg-subtle: #f5f6fa;
+  --color-bg-surface: #ffffff;
+  --color-bg-muted: #eceef3;
+
+  /* Text */
+  --color-text: #111111;
+  --color-text-strong: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-text-subtle: #4b5563;
+
+  /* Borders & overlays */
+  --color-border: rgba(15, 23, 42, 0.06);
+  --color-border-medium: rgba(15, 23, 42, 0.12);
+  --color-border-input: rgba(15, 23, 42, 0.1);
+  --color-shadow: rgba(15, 23, 42, 0.08);
+  --color-overlay: rgba(15, 23, 42, 0.45);
+
+  /* Semantic */
+  --color-error: #dc2626;
+  --color-error-dark: #b91c1c;
+  --color-error-bg: rgba(220, 38, 38, 0.08);
+  --color-on-primary: #ffffff;
 }
 
 *,
@@ -24,7 +59,7 @@ body {
 
 body {
   min-height: 100vh;
-  background-color: #EDEEF3;
+  background-color: var(--color-bg-page);
   color: #e5e7eb;
 }
 

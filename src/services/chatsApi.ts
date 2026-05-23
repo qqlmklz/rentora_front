@@ -1,6 +1,10 @@
 import { getApiBase, getAuthHeaders, getProfileUrl } from './api'
 import type { ChatContract } from './contractsApi'
 import { normalizeChatContract } from './contractsApi'
+import { getCurrentUserId } from '../utils/user'
+import { resolveAssetUrl } from '../utils/resolveAssetUrl'
+
+export { getCurrentUserId }
 
 /** WebSocket чатов: тот же хост, что и API; `ws` / `wss` по схеме API */
 export function getChatsWebSocketUrl(): string {
@@ -18,18 +22,6 @@ export function getChatsWebSocketUrl(): string {
     }
   }
   return 'ws://localhost:8080/ws/chats'
-}
-
-function resolveAssetUrl(value?: string | null): string | null {
-  if (!value) return null
-  if (/^https?:\/\//.test(value)) return value
-  const base = getApiBase()
-  if (value.startsWith('/uploads')) {
-    const apiBase = base || 'http://localhost:8080'
-    return `${apiBase}${value}`
-  }
-  if (!base) return value
-  return value.startsWith('/') ? `${base}${value}` : `${base}/${value}`
 }
 
 export type ChatListItem = {
@@ -67,19 +59,6 @@ export type ChatMessage =
 /** Подпись для превью в списке диалогов и WebSocket */
 export function messagePreviewText(m: ChatMessage): string {
   return m.type === 'contract' ? 'Договор' : m.body
-}
-
-export function getCurrentUserId(): string | null {
-  try {
-    const raw = localStorage.getItem('user')
-    if (!raw) return null
-    const u = JSON.parse(raw) as Record<string, unknown>
-    if (u.id != null) return String(u.id)
-    if (u._id != null) return String(u._id)
-    return null
-  } catch {
-    return null
-  }
 }
 
 function normalizeCompanionName(raw: unknown): string {

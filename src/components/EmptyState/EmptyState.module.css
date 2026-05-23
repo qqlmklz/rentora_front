@@ -1,0 +1,6 @@
+.root {
+  margin: 0;
+  padding: 16px 0 0;
+  color: var(--color-text-subtle);
+  font-size: 14px;
+}

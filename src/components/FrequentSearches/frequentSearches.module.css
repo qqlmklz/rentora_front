@@ -17,7 +17,7 @@
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .grid {
@@ -29,9 +29,9 @@
 .card {
   display: block;
   text-decoration: none;
-  background: #fff;
+  background: var(--color-bg-surface);
   border: 1px solid #e5e7eb;
-  color: #111827;
+  color: var(--color-text-strong);
   border-radius: 14px;
   cursor: pointer;
   transition:
@@ -46,11 +46,11 @@
 
 .card:active {
   transform: translateY(-1px);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 30px var(--color-border-input);
 }
 
 .card:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -67,12 +67,13 @@
   width: 32px;
   height: 32px;
   flex-shrink: 0;
+  color: var(--color-primary);
 }
 
 .caption {
   font-size: 17px;
   font-weight: 500;
-  color: #111827;
+  color: var(--color-text-strong);
 }
 
 @media (max-width: 1023px) {

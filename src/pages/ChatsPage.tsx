@@ -28,6 +28,7 @@ import {
   type ChatContract,
   type ContractFormFields,
 } from '../services/contractsApi'
+import { isChatLandlord, isChatTenant } from '../utils/requestRoles'
 import styles from './ChatsPage.module.css'
 
 const OPEN_AUTH_EVENT = 'rentora:open-auth'
@@ -412,14 +413,8 @@ export function ChatsPage() {
   }
 
   const currentUid = getCurrentUserId()
-  const isLandlordInOpenChat =
-    currentUid != null &&
-    openChat?.propertyOwnerId != null &&
-    String(openChat.propertyOwnerId) === String(currentUid)
-  const isTenantInOpenChat =
-    currentUid != null &&
-    openChat?.propertyOwnerId != null &&
-    String(openChat.propertyOwnerId) !== String(currentUid)
+  const isLandlordInOpenChat = isChatLandlord(currentUid, openChat?.propertyOwnerId)
+  const isTenantInOpenChat = isChatTenant(currentUid, openChat?.propertyOwnerId)
 
   const runContractAction = async (contractId: string, action: 'accept' | 'reject') => {
     if (!chatId) return

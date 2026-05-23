@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useMatch, useNavigate } from 'react-router-dom'
+import { COMMERCIAL_SUBCATEGORIES, RESIDENTIAL_SUBCATEGORIES } from '../constants/property'
 import { getApiBase, getAuthHeaders, getProfileUrl } from '../services/api'
 import {
   mapPropertyApiToForm,
@@ -81,20 +82,6 @@ const initialState: FormState = {
   allowPets: false,
 }
 
-const RESIDENTIAL_SUBCATEGORIES = [
-  { value: 'apartment', label: 'Квартира' },
-  { value: 'room', label: 'Комната' },
-  { value: 'studio', label: 'Студия' },
-  { value: 'house', label: 'Дом / дача' },
-  { value: 'cottage', label: 'Коттедж' },
-] as const
-
-const COMMERCIAL_SUBCATEGORIES = [
-  { value: 'office', label: 'Офис' },
-  { value: 'coworking', label: 'Коворкинг' },
-  { value: 'building', label: 'Здание' },
-  { value: 'warehouse', label: 'Склад' },
-] as const
 
 const ROOMS_OPTIONS = [
   { value: '1', label: '1' },

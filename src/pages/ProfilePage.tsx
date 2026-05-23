@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { Profile } from '../services/profileApi'
 import {
   fetchProfile,
@@ -15,6 +15,7 @@ import {
   getPhoneValidationError,
   isRussianPhoneComplete,
 } from '../utils/phoneMask'
+import { ProfileSidebar } from '../components/ProfileSidebar/ProfileSidebar'
 import styles from './ProfilePage.module.css'
 
 export function ProfilePage() {
@@ -293,21 +294,12 @@ export function ProfilePage() {
     <div className={styles.root}>
       <aside className={styles.sidebar}>
         <nav className={styles.sidebarNav}>
-          <a href="/profile" className={styles.sidebarLinkActive}>
-            Профиль
-          </a>
-          <Link to="/profile/favorites" className={styles.sidebarLink}>
-            Избранное
-          </Link>
-          <Link to="/profile/properties" className={styles.sidebarLink}>
-            Мои объекты
-          </Link>
-          <Link to="/profile/requests" className={styles.sidebarLink}>
-            Заявки
-          </Link>
-          <Link to="/profile/documents" className={styles.sidebarLink}>
-            Документы
-          </Link>
+          <ProfileSidebar
+            active="profile"
+            profileUsesAnchor
+            linkClassName={styles.sidebarLink}
+            activeLinkClassName={styles.sidebarLinkActive}
+          />
         </nav>
       </aside>
 

@@ -17,8 +17,8 @@
   display: flex;
   flex-direction: column;
   border-radius: 20px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-shadow);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
   padding: 20px 20px 16px;
   box-sizing: border-box;
@@ -28,15 +28,15 @@
   margin: 0 0 12px;
   font-size: 18px;
   font-weight: 700;
-  color: #111111;
+  color: var(--color-text);
 }
 
 .error {
   margin: 0 0 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(220, 38, 38, 0.08);
-  color: #b91c1c;
+  background: var(--color-error-bg);
+  color: var(--color-error-dark);
   font-size: 14px;
 }
 
@@ -70,24 +70,24 @@
 .label {
   font-size: 12px;
   font-weight: 600;
-  color: #4b5563;
+  color: var(--color-text-subtle);
 }
 
 .input {
   width: 100%;
   padding: 9px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--color-border-medium);
   background: #f9fafb;
   font-size: 14px;
-  color: #111827;
+  color: var(--color-text-strong);
   outline: none;
   box-sizing: border-box;
 }
 
 .input:focus {
-  border-color: rgba(74, 67, 236, 0.45);
-  background: #fff;
+  border-color: var(--color-primary-border);
+  background: var(--color-bg-surface);
 }
 
 .actions {
@@ -96,7 +96,7 @@
   gap: 10px;
   flex-shrink: 0;
   padding-top: 8px;
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  border-top: 1px solid var(--color-border);
   margin-top: 4px;
 }
 
@@ -104,8 +104,8 @@
   padding: 10px 18px;
   border-radius: 14px;
   border: none;
-  background: #4a43ec;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -120,11 +120,11 @@
   padding: 10px 18px;
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.15);
-  background: #fff;
+  background: var(--color-bg-surface);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .btnSecondary:disabled {

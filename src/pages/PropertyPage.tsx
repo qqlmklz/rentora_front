@@ -10,6 +10,8 @@ import {
   isFavoritePropertyId,
 } from '../services/favoritesApi'
 import { getOrCreateChatForProperty } from '../services/chatsApi'
+import { formatPrice } from '../utils/format'
+import { resolveAssetUrl } from '../utils/resolveAssetUrl'
 import styles from './PropertyPage.module.css'
 
 type Property = {
@@ -53,25 +55,6 @@ function parsePhotosFromApi(p: Record<string, unknown>): string[] {
   const raw = p?.photos
   if (!Array.isArray(raw)) return []
   return raw.map(extractPhotoPath).filter(Boolean)
-}
-
-function resolvePhotoUrl(photo: string | null | undefined): string | null {
-  if (!photo) return null
-  if (/^https?:\/\//.test(photo)) return photo
-  const base = getApiBase()
-  if (photo.startsWith('/uploads')) {
-    const apiBase = base || 'http://localhost:8080'
-    return `${apiBase}${photo}`
-  }
-  if (!base) return photo
-  return photo.startsWith('/') ? `${base}${photo}` : `${base}/${photo}`
-}
-
-function formatPrice(value: Property['price']): string | null {
-  if (value === null || value === undefined || value === '') return null
-  const num = typeof value === 'number' ? value : Number(String(value).replace(/\s/g, '').replace(',', '.'))
-  if (!Number.isFinite(num)) return String(value)
-  return new Intl.NumberFormat('ru-RU').format(num) + ' ₽'
 }
 
 function labelRentType(v: string | null | undefined): string {
@@ -311,7 +294,7 @@ export function PropertyPage() {
   const currentSrc = useMemo(() => {
     if (!photos.length) return null
     const ph = photos[activePhoto]
-    return ph && !brokenPhotos[activePhoto] ? resolvePhotoUrl(ph) : null
+    return ph && !brokenPhotos[activePhoto] ? resolveAssetUrl(ph) : null
   }, [photos, activePhoto, brokenPhotos])
 
   if (loading) {
@@ -443,7 +426,7 @@ export function PropertyPage() {
                   {photoCount > 1 && (
                     <div className={styles.thumbs} role="tablist" aria-label="Миниатюры">
                       {photos.map((ph, idx) => {
-                        const src = resolvePhotoUrl(ph)
+                        const src = resolveAssetUrl(ph)
                         return (
                           <button
                             key={idx}

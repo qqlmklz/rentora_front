@@ -1,117 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { EmptyState } from '../components/EmptyState/EmptyState'
+import { PropertyListingCard } from '../components/PropertyListingCard/PropertyListingCard'
+import {
+  CATEGORY_OPTIONS,
+  isPropertyTypeValidForCategory,
+  PROPERTY_TYPE_ALIASES,
+  PROPERTY_TYPE_OPTIONS,
+  PROPERTY_TYPE_VALUES,
+  PROPERTY_TYPES_BY_CATEGORY,
+  ROOMS_OPTIONS,
+  ROOMS_VALUES,
+  SORT_OPTIONS,
+  applyPropertyFilterCascade,
+} from '../constants/property'
+import { ROUTES } from '../constants/routes'
 import { fetchCatalog, type CatalogFilters, type CatalogItem } from '../services/catalogApi'
+import { filtersFromSearchParams, normalizeOptionValue } from '../utils/catalogFilters'
 import styles from './CatalogPage.module.css'
-
-const CATEGORY_OPTIONS = [
-  { value: '', label: 'Любой тип' },
-  { value: 'residential', label: 'Жилое' },
-  { value: 'commercial', label: 'Коммерция' },
-]
-
-const PROPERTY_TYPE_OPTIONS = [
-  { value: '', label: 'Любой объект' },
-  { value: 'apartment', label: 'Квартира' },
-  { value: 'room', label: 'Комната' },
-  { value: 'studio', label: 'Студия' },
-  { value: 'house', label: 'Дом' },
-  { value: 'cottage', label: 'Коттедж' },
-  { value: 'office', label: 'Офис' },
-  { value: 'coworking', label: 'Коворкинг' },
-  { value: 'building', label: 'Здание' },
-  { value: 'warehouse', label: 'Склад' },
-]
-
-const ROOMS_OPTIONS = [
-  { value: '', label: 'Любые' },
-  { value: '1', label: '1' },
-  { value: '2', label: '2' },
-  { value: '3', label: '3' },
-  { value: '4', label: '4' },
-  { value: '5', label: '5' },
-  { value: '6+', label: '6+' },
-]
-
-const SORT_OPTIONS = [
-  { value: 'newest', label: 'Сначала новые' },
-  { value: 'cheapest', label: 'Сначала дешёвые' },
-  { value: 'expensive', label: 'Сначала дорогие' },
-]
-
-const CATEGORY_ALIASES: Record<string, string> = {
-  жилое: 'residential',
-  коммерция: 'commercial',
-}
-
-const PROPERTY_TYPE_ALIASES: Record<string, string> = {
-  квартира: 'apartment',
-  комната: 'room',
-  студия: 'studio',
-  дом: 'house',
-  коттедж: 'cottage',
-  офис: 'office',
-  коворкинг: 'coworking',
-  здание: 'building',
-  склад: 'warehouse',
-}
-
-const SORT_ALIASES: Record<string, string> = {
-  'сначала новые': 'newest',
-  'сначала дешёвые': 'cheapest',
-  'сначала дорогие': 'expensive',
-}
-
-const CATEGORY_VALUES = new Set(CATEGORY_OPTIONS.map((option) => option.value).filter(Boolean))
-const PROPERTY_TYPE_VALUES = new Set(PROPERTY_TYPE_OPTIONS.map((option) => option.value).filter(Boolean))
-const ROOMS_VALUES = new Set(ROOMS_OPTIONS.map((option) => option.value).filter(Boolean))
-const SORT_VALUES = new Set(SORT_OPTIONS.map((option) => option.value))
-
-const PROPERTY_TYPES_BY_CATEGORY: Record<'residential' | 'commercial', string[]> = {
-  residential: ['apartment', 'room', 'studio', 'house', 'cottage'],
-  commercial: ['office', 'coworking', 'building', 'warehouse'],
-}
-
-function normalizeByAliases(value: string | null, aliases: Record<string, string>): string {
-  const raw = (value ?? '').trim()
-  if (!raw) return ''
-  return aliases[raw.toLowerCase()] ?? raw
-}
-
-function normalizeOptionValue(
-  value: string | null,
-  aliases: Record<string, string>,
-  allowedValues: Set<string>,
-  fallback = '',
-): string {
-  const normalized = normalizeByAliases(value, aliases)
-  if (!normalized) return fallback
-  return allowedValues.has(normalized) ? normalized : fallback
-}
-
-function isPropertyTypeValidForCategory(category: string, propertyType: string): boolean {
-  if (!propertyType) return true
-  if (category !== 'residential' && category !== 'commercial') return PROPERTY_TYPE_VALUES.has(propertyType)
-  return PROPERTY_TYPES_BY_CATEGORY[category].includes(propertyType)
-}
-
-function filtersFromSearchParams(params: URLSearchParams): CatalogFilters {
-  const category = normalizeOptionValue(params.get('category'), CATEGORY_ALIASES, CATEGORY_VALUES)
-  const propertyType = normalizeOptionValue(
-    params.get('propertyType'),
-    PROPERTY_TYPE_ALIASES,
-    PROPERTY_TYPE_VALUES,
-  )
-  const rooms = normalizeOptionValue(params.get('rooms'), {}, ROOMS_VALUES)
-  return {
-    category,
-    propertyType: isPropertyTypeValidForCategory(category, propertyType) ? propertyType : '',
-    rooms: category === 'commercial' ? '' : rooms,
-    priceFrom: (params.get('priceFrom') ?? '').trim(),
-    priceTo: (params.get('priceTo') ?? '').trim(),
-    location: (params.get('location') ?? '').trim(),
-    sort: normalizeOptionValue(params.get('sort'), SORT_ALIASES, SORT_VALUES, 'newest'),
-  }
-}
 
 function applySort(items: CatalogItem[], sort: string | undefined): CatalogItem[] {
   if (!sort || sort === 'newest') return items
@@ -122,26 +28,6 @@ function applySort(items: CatalogItem[], sort: string | undefined): CatalogItem[
     copy.sort((a, b) => Number(b.price ?? 0) - Number(a.price ?? 0))
   }
   return copy
-}
-
-function formatPrice(value: CatalogItem['price']): string | null {
-  if (value === null || value === undefined || value === '') return null
-  const num = typeof value === 'number' ? value : Number(String(value).replace(/\s/g, '').replace(',', '.'))
-  if (!Number.isFinite(num)) return String(value)
-  return new Intl.NumberFormat('ru-RU').format(num) + ' ₽'
-}
-
-function formatDetails(item: CatalogItem): string {
-  const parts: string[] = []
-  if (item.propertyType) parts.push(item.propertyType)
-  if (item.rooms !== null && item.rooms !== undefined && item.rooms !== '') parts.push(`${item.rooms} комн.`)
-  if (item.totalArea !== null && item.totalArea !== undefined && item.totalArea !== '') parts.push(`${item.totalArea} м²`)
-  return parts.join(' · ')
-}
-
-function formatLocation(item: CatalogItem): string | null {
-  const parts = [item.city, item.district].filter(Boolean) as string[]
-  return parts.length ? parts.join(' / ') : null
 }
 
 export function CatalogPage() {
@@ -170,7 +56,7 @@ export function CatalogPage() {
 
   useEffect(() => {
     const query = searchParams.toString()
-    const url = query ? `/catalog?${query}` : '/catalog'
+    const url = query ? `${ROUTES.catalog}?${query}` : ROUTES.catalog
     console.log('[CatalogPage] current query params:', query)
     console.log('[CatalogPage] current category:', filters.category ?? '')
     console.log('[CatalogPage] filters state:', filters)
@@ -245,23 +131,49 @@ export function CatalogPage() {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       Object.entries(patch).forEach(([key, value]) => {
-        if (value === undefined || value === null || value === '') {
-          next.delete(key)
-        } else {
-          next.set(key, String(value))
-        }
+        const v = value === undefined || value === null ? '' : String(value).trim()
+        if (!v) next.delete(key)
+        else next.set(key, v)
       })
-      // если сортировка не задана явно — по умолчанию newest
-      if (!next.get('sort')) next.set('sort', 'newest')
-      const query = next.toString()
-      const nextUrl = query ? `/catalog?${query}` : '/catalog'
-      console.log('[CatalogPage] next query URL:', nextUrl)
       return next
     })
   }
 
+  const handleCategoryChange = (category: string) => {
+    const cascaded = applyPropertyFilterCascade(
+      {
+        category: filters.category ?? '',
+        propertyType: filters.propertyType ?? '',
+        rooms: filters.rooms ?? '',
+      },
+      'category',
+      category,
+    )
+    updateFilter({
+      category: cascaded.category,
+      propertyType: cascaded.propertyType,
+      rooms: cascaded.rooms,
+    })
+  }
+
+  const handlePropertyTypeChange = (propertyType: string) => {
+    const cascaded = applyPropertyFilterCascade(
+      {
+        category: filters.category ?? '',
+        propertyType: filters.propertyType ?? '',
+        rooms: filters.rooms ?? '',
+      },
+      'propertyType',
+      propertyType,
+    )
+    updateFilter({
+      propertyType: cascaded.propertyType,
+      rooms: cascaded.rooms,
+    })
+  }
+
   const handleCardClick = (id: string) => {
-    navigate(`/properties/${encodeURIComponent(id)}`)
+    navigate(ROUTES.property(id))
   }
 
   return (
@@ -281,22 +193,16 @@ export function CatalogPage() {
             >
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="catalog-category">
-                  Тип недвижимости
+                  Тип
                 </label>
                 <select
                   id="catalog-category"
                   className={styles.select}
                   value={filters.category ?? ''}
-                  onChange={(e) =>
-                    updateFilter({
-                      category: e.target.value,
-                      propertyType: '',
-                      rooms: e.target.value === 'commercial' ? '' : filters.rooms,
-                    })
-                  }
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                 >
                   {CATEGORY_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
+                    <option key={o.value || 'any'} value={o.value}>
                       {o.label}
                     </option>
                   ))}
@@ -305,24 +211,16 @@ export function CatalogPage() {
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="catalog-property-type">
-                  Вид объекта
+                  Объект
                 </label>
                 <select
                   id="catalog-property-type"
                   className={styles.select}
                   value={filters.propertyType ?? ''}
-                  onChange={(e) => {
-                    const propertyType = e.target.value
-                    updateFilter(
-                      propertyType === 'studio'
-                        ? { propertyType, rooms: '' }
-                        : { propertyType },
-                    )
-                  }}
-                  disabled={!filters.category}
+                  onChange={(e) => handlePropertyTypeChange(e.target.value)}
                 >
                   {propertyTypeOptions.map((o) => (
-                    <option key={o.value} value={o.value}>
+                    <option key={o.value || 'any-type'} value={o.value}>
                       {o.label}
                     </option>
                   ))}
@@ -331,61 +229,65 @@ export function CatalogPage() {
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="catalog-rooms">
-                  Комнаты
+                  Комнат
                 </label>
                 <select
                   id="catalog-rooms"
                   className={styles.select}
                   value={filters.rooms ?? ''}
-                  onChange={(e) => updateFilter({ rooms: e.target.value })}
                   disabled={filters.category === 'commercial' || filters.propertyType === 'studio'}
+                  onChange={(e) => updateFilter({ rooms: e.target.value })}
                 >
                   {ROOMS_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
+                    <option key={o.value || 'any-rooms'} value={o.value}>
                       {o.label}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Цена</label>
-                <div className={styles.priceRow}>
-                  <input
-                    type="number"
-                    min={0}
-                    className={styles.input}
-                    placeholder="От"
-                    value={filters.priceFrom ?? ''}
-                    onChange={(e) => updateFilter({ priceFrom: e.target.value })}
-                  />
-                  <span className={styles.priceDash}>—</span>
-                  <input
-                    type="number"
-                    min={0}
-                    className={styles.input}
-                    placeholder="До"
-                    value={filters.priceTo ?? ''}
-                    onChange={(e) => updateFilter({ priceTo: e.target.value })}
-                  />
-                </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="catalog-price-from">
+                  Цена от
+                </label>
+                <input
+                  id="catalog-price-from"
+                  className={styles.input}
+                  type="text"
+                  inputMode="numeric"
+                  value={filters.priceFrom ?? ''}
+                  onChange={(e) => updateFilter({ priceFrom: e.target.value })}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="catalog-price-to">
+                  Цена до
+                </label>
+                <input
+                  id="catalog-price-to"
+                  className={styles.input}
+                  type="text"
+                  inputMode="numeric"
+                  value={filters.priceTo ?? ''}
+                  onChange={(e) => updateFilter({ priceTo: e.target.value })}
+                />
               </div>
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="catalog-location">
-                  Локация
+                  Район / город
                 </label>
                 <input
                   id="catalog-location"
-                  type="text"
                   className={styles.input}
-                  placeholder="Город, метро, район"
+                  type="text"
                   value={filters.location ?? ''}
                   onChange={(e) => updateFilter({ location: e.target.value })}
                 />
               </div>
 
-              <div className={`${styles.field} ${styles.sortField}`}>
+              <div className={styles.field}>
                 <label className={styles.label} htmlFor="catalog-sort">
                   Сортировка
                 </label>
@@ -416,55 +318,26 @@ export function CatalogPage() {
             {loading && <p className={styles.loading}>Загрузка…</p>}
             {error && !loading && <p className={styles.error}>{error}</p>}
             {empty && !error && !loading && (
-              <p className={styles.empty}>По вашему запросу ничего не найдено</p>
+              <EmptyState className={styles.empty}>По вашему запросу ничего не найдено</EmptyState>
             )}
 
             {!loading && !error && !empty && (
               <div className={styles.grid}>
-                {sortedItems.map((item) => {
-                  const price = formatPrice(item.price)
-                  const details = formatDetails(item)
-                  const location = formatLocation(item)
-                  const hasPhoto = !!item.photoUrl && !brokenPhotos[item.id]
-
-                  return (
-                    <article
-                      key={item.id}
-                      className={styles.card}
-                      onClick={() => handleCardClick(item.id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') handleCardClick(item.id)
-                      }}
-                    >
-                      <div className={styles.cardImageWrap}>
-                        {hasPhoto ? (
-                          <img
-                            src={item.photoUrl ?? undefined}
-                            alt=""
-                            className={styles.cardImage}
-                            loading="lazy"
-                            onError={() =>
-                              setBrokenPhotos((prev) => ({
-                                ...prev,
-                                [item.id]: true,
-                              }))
-                            }
-                          />
-                        ) : (
-                          <span className={styles.cardImagePlaceholder}>Фото</span>
-                        )}
-                      </div>
-                      <div className={styles.cardBody}>
-                        {price && <p className={styles.price}>{price}</p>}
-                        {item.title && <p className={styles.cardTitle}>{item.title}</p>}
-                        <p className={styles.meta}>{details || 'Объявление'}</p>
-                        {location && <p className={styles.location}>{location}</p>}
-                      </div>
-                    </article>
-                  )
-                })}
+                {sortedItems.map((item) => (
+                  <PropertyListingCard
+                    key={item.id}
+                    item={item}
+                    variant="grid"
+                    photoBroken={Boolean(brokenPhotos[item.id])}
+                    onPhotoError={() =>
+                      setBrokenPhotos((prev) => ({
+                        ...prev,
+                        [item.id]: true,
+                      }))
+                    }
+                    onOpen={() => handleCardClick(item.id)}
+                  />
+                ))}
               </div>
             )}
           </section>
@@ -473,4 +346,3 @@ export function CatalogPage() {
     </div>
   )
 }
-

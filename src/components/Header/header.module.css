@@ -16,7 +16,7 @@
   justify-content: space-between;
   padding: 12px 20px;
   border-radius: 32px;
-  background-color: #f5f6fa;
+  background-color: var(--color-bg-subtle);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
   gap: 16px;
 }
@@ -36,13 +36,13 @@
   font-weight: 700;
   letter-spacing: 0.3px;
   text-transform: lowercase;
-  color: #111111;
+  color: var(--color-text);
   cursor: pointer;
   text-decoration: none;
 }
 
 .logo:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -69,17 +69,17 @@
 }
 
 .navItem:hover {
-  color: #4a43ec;
+  color: var(--color-primary);
 }
 
 .navItem:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 .navItemActive {
-  color: #4a43ec;
+  color: var(--color-primary);
 }
 
 .right {
@@ -109,11 +109,11 @@
 }
 
 .iconButton:hover {
-  color: #4a43ec;
+  color: var(--color-primary);
 }
 
 .iconButton:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -134,7 +134,7 @@
   height: 34px;
   border-radius: 999px;
   border: none;
-  background-color: #ffffff;
+  background-color: var(--color-bg-surface);
   box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.7);
   cursor: pointer;
   text-decoration: none;
@@ -149,10 +149,10 @@
   top: calc(100% + 8px);
   right: 0;
   min-width: 180px;
-  background: #ffffff;
+  background: var(--color-bg-surface);
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(15, 23, 42, 0.2);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--color-shadow);
   padding: 6px 0;
   z-index: 50;
 }
@@ -165,7 +165,7 @@
   background: none;
   font-size: 14px;
   font-weight: 500;
-  color: #111827;
+  color: var(--color-text-strong);
   text-align: left;
   cursor: pointer;
   text-decoration: none;
@@ -174,13 +174,13 @@
 }
 
 .dropdownItem:hover {
-  background-color: #f5f6fa;
-  color: #4a43ec;
+  background-color: var(--color-bg-subtle);
+  color: var(--color-primary);
 }
 
 .dropdownItem:focus-visible {
   outline: none;
-  background-color: #f5f6fa;
+  background-color: var(--color-bg-subtle);
 }
 
 .avatarImage {
@@ -193,11 +193,11 @@
 .avatarFallback {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-strong);
 }
 
 .avatarButton:hover {
-  box-shadow: 0 0 0 1px #4a43ec;
+  box-shadow: 0 0 0 1px var(--color-primary);
 }
 
 .avatarButton:active {
@@ -205,7 +205,7 @@
 }
 
 .avatarButton:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -213,32 +213,32 @@
   border-radius: 20px;
   padding: 8px 18px;
   border: none;
-  background-color: #4a43ec;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-bg-surface);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition:
     background-color 0.15s ease,
     box-shadow 0.15s ease;
-  box-shadow: 0 10px 24px rgba(74, 67, 236, 0.4);
+  box-shadow: 0 10px 24px var(--color-primary-shadow);
 }
 
 .primaryButton:hover {
-  background-color: #3d37d0;
+  background-color: var(--color-primary-hover);
 }
 
 .primaryButton:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 .secondaryButton {
   border-radius: 20px;
   padding: 8px 18px;
-  border: 2px solid #4a43ec;
-  background-color: #ffffff;
-  color: #4a43ec;
+  border: 2px solid var(--color-primary);
+  background-color: var(--color-bg-surface);
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -253,13 +253,13 @@
 }
 
 .secondaryButton:hover {
-  background-color: #4a43ec;
-  color: #ffffff;
-  box-shadow: 0 10px 24px rgba(74, 67, 236, 0.3);
+  background-color: var(--color-primary);
+  color: var(--color-bg-surface);
+  box-shadow: 0 10px 24px var(--color-primary-border);
 }
 
 .secondaryButton:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -275,11 +275,11 @@
 }
 
 .menuButton:hover {
-  color: #4a43ec;
+  color: var(--color-primary);
 }
 
 .menuButton:focus-visible {
-  outline: 2px solid #4a43ec;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -293,7 +293,7 @@
   margin-top: 8px;
   padding: 12px 16px;
   border-radius: 20px;
-  background-color: #f5f6fa;
+  background-color: var(--color-bg-subtle);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
   box-sizing: border-box;
 }
@@ -319,13 +319,13 @@
 }
 
 .mobileNavItem:hover {
-  color: #4a43ec;
-  background-color: rgba(74, 67, 236, 0.08);
+  color: var(--color-primary);
+  background-color: var(--color-primary-soft);
 }
 
 .mobileNavItemActive {
-  color: #4a43ec;
-  background-color: rgba(74, 67, 236, 0.1);
+  color: var(--color-primary);
+  background-color: var(--color-primary-soft);
 }
 
 @media (max-width: 830px) {

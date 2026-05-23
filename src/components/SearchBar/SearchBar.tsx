@@ -1,34 +1,15 @@
 import { type FC, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
+import {
+  applyPropertyFilterCascade,
+  COMMERCIAL_TYPES,
+  RESIDENTIAL_TYPES,
+  SEARCH_CATEGORIES,
+  SEARCH_ROOMS,
+} from '../../constants/property'
+import { ROUTES } from '../../constants/routes'
 import styles from './searchBar.module.css'
-
-const CATEGORIES = [
-  { value: 'residential', label: 'Жилое' },
-  { value: 'commercial', label: 'Коммерция' },
-] as const
-
-const RESIDENTIAL_TYPES = [
-  { value: 'apartment', label: 'Квартира' },
-  { value: 'room', label: 'Комната' },
-  { value: 'studio', label: 'Студия' },
-  { value: 'house', label: 'Дом' },
-]
-
-const COMMERCIAL_TYPES = [
-  { value: 'warehouse', label: 'Склад' },
-  { value: 'office', label: 'Офис' },
-  { value: 'coworking', label: 'Коворкинг' },
-]
-
-const ROOMS = [
-  { value: '1', label: '1' },
-  { value: '2', label: '2' },
-  { value: '3', label: '3' },
-  { value: '4', label: '4' },
-  { value: '5', label: '5' },
-  { value: '6+', label: '6+' },
-]
 
 export type SearchFilters = {
   category: string
@@ -52,21 +33,21 @@ export const SearchBar: FC = () => {
   const navigate = useNavigate()
   const [filters, setFilters] = useState<SearchFilters>(initialFilters)
 
-  const propertyTypes = filters.category === 'residential' ? RESIDENTIAL_TYPES : filters.category === 'commercial' ? COMMERCIAL_TYPES : []
+  const propertyTypes =
+    filters.category === 'residential'
+      ? RESIDENTIAL_TYPES
+      : filters.category === 'commercial'
+        ? COMMERCIAL_TYPES
+        : []
   const isRoomsDisabled =
     filters.category === 'commercial' || filters.propertyType === 'studio'
 
   const updateFilter = useCallback(<K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
     setFilters((prev) => {
-      const next = { ...prev, [key]: value }
-      if (key === 'category') {
-        next.propertyType = ''
-        if (value === 'commercial') next.rooms = ''
+      if (key === 'category' || key === 'propertyType') {
+        return applyPropertyFilterCascade(prev, key, String(value))
       }
-      if (key === 'propertyType' && value === 'studio') {
-        next.rooms = ''
-      }
-      return next
+      return { ...prev, [key]: value }
     })
   }, [])
 
@@ -89,7 +70,7 @@ export const SearchBar: FC = () => {
     })
 
     const query = params.toString()
-    const targetUrl = query ? `/catalog?${query}` : '/catalog'
+    const targetUrl = query ? `${ROUTES.catalog}?${query}` : ROUTES.catalog
     console.log('[SearchBar] navigate to:', targetUrl)
     navigate(targetUrl)
   }
@@ -99,18 +80,17 @@ export const SearchBar: FC = () => {
       <form className={styles.form} onSubmit={handleSubmit}>
         {/* Категория */}
         <div className={styles.field}>
-          <label htmlFor="search-category" className={styles.label}>
-            Тип недвижимости
+          <label className={styles.label} htmlFor="search-category">
+            Категория
           </label>
           <select
             id="search-category"
             className={styles.select}
             value={filters.category}
             onChange={(e) => updateFilter('category', e.target.value)}
-            aria-label="Категория"
           >
-            <option value="">—</option>
-            {CATEGORIES.map((c) => (
+            <option value="">Выберите</option>
+            {SEARCH_CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
               </option>
@@ -118,22 +98,19 @@ export const SearchBar: FC = () => {
           </select>
         </div>
 
-        <div className={styles.separator} aria-hidden="true" />
-
-        {/* Подкатегория (тип объекта) */}
+        {/* Тип объекта */}
         <div className={styles.field}>
-          <label htmlFor="search-type" className={styles.label}>
-            Объект
+          <label className={styles.label} htmlFor="search-property-type">
+            Тип объекта
           </label>
           <select
-            id="search-type"
+            id="search-property-type"
             className={styles.select}
             value={filters.propertyType}
-            onChange={(e) => updateFilter('propertyType', e.target.value)}
             disabled={!filters.category}
-            aria-label="Тип объекта"
+            onChange={(e) => updateFilter('propertyType', e.target.value)}
           >
-            <option value="">—</option>
+            <option value="">Выберите</option>
             {propertyTypes.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
@@ -142,23 +119,20 @@ export const SearchBar: FC = () => {
           </select>
         </div>
 
-        <div className={styles.separator} aria-hidden="true" />
-
         {/* Комнаты */}
         <div className={styles.field}>
-          <label htmlFor="search-rooms" className={styles.label}>
-            Комнаты
+          <label className={styles.label} htmlFor="search-rooms">
+            Комнат
           </label>
           <select
             id="search-rooms"
             className={styles.select}
             value={filters.rooms}
-            onChange={(e) => updateFilter('rooms', e.target.value)}
             disabled={isRoomsDisabled}
-            aria-label="Количество комнат"
+            onChange={(e) => updateFilter('rooms', e.target.value)}
           >
-            <option value="">—</option>
-            {ROOMS.map((r) => (
+            <option value="">Любое</option>
+            {SEARCH_ROOMS.map((r) => (
               <option key={r.value} value={r.value}>
                 {r.label}
               </option>
@@ -166,57 +140,56 @@ export const SearchBar: FC = () => {
           </select>
         </div>
 
-        <div className={styles.separator} aria-hidden="true" />
-
         {/* Цена */}
-        <div className={styles.fieldGroup}>
-          <label className={styles.label}>Цена</label>
-          <div className={styles.priceRow}>
-            <input
-              type="number"
-              className={styles.input}
-              placeholder="От"
-              value={filters.priceFrom}
-              onChange={(e) => updateFilter('priceFrom', e.target.value)}
-              min={0}
-              aria-label="Цена от"
-            />
-            <span className={styles.priceDash}>—</span>
-            <input
-              type="number"
-              className={styles.input}
-              placeholder="До"
-              value={filters.priceTo}
-              onChange={(e) => updateFilter('priceTo', e.target.value)}
-              min={0}
-              aria-label="Цена до"
-            />
-          </div>
-        </div>
-
-        <div className={styles.separator} aria-hidden="true" />
-
-        {/* Локация */}
         <div className={styles.field}>
-          <label htmlFor="search-location" className={styles.label}>
-            Локация
+          <label className={styles.label} htmlFor="search-price-from">
+            Цена от
           </label>
           <input
-            id="search-location"
-            type="text"
+            id="search-price-from"
             className={styles.input}
-            placeholder="Город, метро, район"
-            value={filters.location}
-            onChange={(e) => updateFilter('location', e.target.value)}
-            aria-label="Город, метро, район"
+            type="text"
+            inputMode="numeric"
+            placeholder="от"
+            value={filters.priceFrom}
+            onChange={(e) => updateFilter('priceFrom', e.target.value)}
           />
         </div>
 
-        <div className={styles.buttonWrap}>
-          <button type="submit" className={styles.submitButton} aria-label="Искать">
-            <Search size={20} strokeWidth={2.5} />
-          </button>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="search-price-to">
+            Цена до
+          </label>
+          <input
+            id="search-price-to"
+            className={styles.input}
+            type="text"
+            inputMode="numeric"
+            placeholder="до"
+            value={filters.priceTo}
+            onChange={(e) => updateFilter('priceTo', e.target.value)}
+          />
         </div>
+
+        {/* Локация */}
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="search-location">
+            Район / город
+          </label>
+          <input
+            id="search-location"
+            className={styles.input}
+            type="text"
+            placeholder="Введите район или город"
+            value={filters.location}
+            onChange={(e) => updateFilter('location', e.target.value)}
+          />
+        </div>
+
+        <button type="submit" className={styles.submitButton}>
+          <Search size={18} aria-hidden />
+          Найти
+        </button>
       </form>
     </section>
   )

@@ -5,6 +5,7 @@ export const FAVORITES_CHANGED_EVENT = 'rentora:favorites-changed'
 
 export type FavoriteProperty = {
   id: string
+  title?: string | null
   photoUrl?: string | null
   price?: number | string | null
   propertyType?: string | null
@@ -37,9 +38,10 @@ function normalizeItem(item: any): FavoriteProperty | null {
   const photo = p?.photoUrl ?? p?.image ?? p?.photo ?? p?.cover ?? p?.photos?.[0]
   return {
     id: String(id),
+    title: (p?.title ?? item?.title ?? null) as string | null,
     photoUrl: resolveAssetUrl(photo ?? null),
     price: p?.price ?? null,
-    propertyType: p?.propertyType ?? p?.type ?? null,
+    propertyType: p?.propertyType ?? p?.subcategory ?? p?.propertyType ?? p?.type ?? null,
     rooms: p?.rooms ?? p?.roomsCount ?? null,
     area: p?.area ?? p?.square ?? null,
     city: p?.city ?? null,
