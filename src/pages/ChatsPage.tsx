@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   fetchChats,
   fetchChatMessages,
@@ -93,6 +93,7 @@ const CompanionAvatar: FC<{
 }
 
 export function ChatsPage() {
+  const navigate = useNavigate()
   const { chatId } = useParams<{ chatId: string }>()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatIdRef = useRef<string | undefined>(chatId)
@@ -437,6 +438,10 @@ export function ChatsPage() {
     }
   }
 
+  const clearSelectedDialog = useCallback(() => {
+    navigate('/chats')
+  }, [navigate])
+
   const emptyChats = !chatsLoading && !chatsError && chats.length === 0
   const emptyMessages =
     Boolean(chatId) && !messagesLoading && !messagesError && messages.length === 0
@@ -472,7 +477,9 @@ export function ChatsPage() {
           </div>
         )}
 
-        <div className={styles.layout}>
+        <div
+          className={`${styles.layout} ${chatId ? styles.hasSelectedDialog : ''}`.trim()}
+        >
           <aside className={styles.sidebar} aria-label="Список чатов">
             <div className={styles.sidebarHeader}>Диалоги</div>
             <div className={styles.list}>
@@ -531,15 +538,25 @@ export function ChatsPage() {
                 <div className={styles.threadHeader}>
                   {activeChat ? (
                     <div className={styles.threadHeaderMain}>
-                      <div className={styles.threadHeaderRow}>
-                        <CompanionAvatar
-                          className={styles.chatThumb}
-                          url={activeChat.companionAvatar}
-                          displayName={activeChat.companionName}
-                        />
-                        <div className={styles.threadHeaderText}>
-                          <p className={styles.threadHeaderTitle}>{activeChat.propertyTitle}</p>
-                          <p className={styles.threadHeaderSub}>{activeChat.companionName}</p>
+                      <div className={styles.threadHeaderRowWithBack}>
+                        <button
+                          type="button"
+                          className={styles.backBtn}
+                          onClick={clearSelectedDialog}
+                          aria-label="Назад к списку диалогов"
+                        >
+                          ← Назад
+                        </button>
+                        <div className={styles.threadHeaderRow}>
+                          <CompanionAvatar
+                            className={styles.chatThumb}
+                            url={activeChat.companionAvatar}
+                            displayName={activeChat.companionName}
+                          />
+                          <div className={styles.threadHeaderText}>
+                            <p className={styles.threadHeaderTitle}>{activeChat.propertyTitle}</p>
+                            <p className={styles.threadHeaderSub}>{activeChat.companionName}</p>
+                          </div>
                         </div>
                       </div>
                       {showContractButton ? (
@@ -559,9 +576,17 @@ export function ChatsPage() {
                       ) : null}
                     </div>
                   ) : (
-                    <>
+                    <div className={styles.threadHeaderRowWithBack}>
+                      <button
+                        type="button"
+                        className={styles.backBtn}
+                        onClick={clearSelectedDialog}
+                        aria-label="Назад к списку диалогов"
+                      >
+                        ← Назад
+                      </button>
                       <p className={styles.threadHeaderTitle}>Чат</p>
-                    </>
+                    </div>
                   )}
                 </div>
 

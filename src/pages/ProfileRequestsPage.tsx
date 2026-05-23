@@ -96,6 +96,12 @@ function formatPropertyAddress(item: ProfileRequestItem): string {
   return parts.length ? parts.join(' / ') : '—'
 }
 
+function sortRequestsByCreatedAtDesc(items: ProfileRequestItem[]): ProfileRequestItem[] {
+  return [...items].sort(
+    (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
+  )
+}
+
 function formatPropertyLabel(option: RequestPropertyOption): string {
   const location = [option.address, option.city, option.district].filter(Boolean).join(' / ')
   if (location) return `${option.title || `Объявление #${option.id}`} — ${location}`
@@ -171,8 +177,12 @@ export function ProfileRequestsPage() {
 
   const applyRequestsPayload = useCallback((payload: ProfileRequestsResponse) => {
     setRequestsBundle({
-      activeRequests: Array.isArray(payload.activeRequests) ? payload.activeRequests : [],
-      archivedRequests: Array.isArray(payload.archivedRequests) ? payload.archivedRequests : [],
+      activeRequests: sortRequestsByCreatedAtDesc(
+        Array.isArray(payload.activeRequests) ? payload.activeRequests : [],
+      ),
+      archivedRequests: sortRequestsByCreatedAtDesc(
+        Array.isArray(payload.archivedRequests) ? payload.archivedRequests : [],
+      ),
     })
   }, [])
 
@@ -257,10 +267,9 @@ export function ProfileRequestsPage() {
   }, [selectedPropertyId, properties])
 
   const displayedItems = useMemo(() => {
-    const active = requestsBundle.activeRequests
-    const archived = requestsBundle.archivedRequests
-    const list = listTab === 'active' ? active : archived
-    return Array.isArray(list) ? list : []
+    const active = sortRequestsByCreatedAtDesc(requestsBundle.activeRequests)
+    const archived = sortRequestsByCreatedAtDesc(requestsBundle.archivedRequests)
+    return listTab === 'active' ? active : archived
   }, [listTab, requestsBundle.activeRequests, requestsBundle.archivedRequests])
   const empty = useMemo(
     () => !loading && !error && displayedItems.length === 0,

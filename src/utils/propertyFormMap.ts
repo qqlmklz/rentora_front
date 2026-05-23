@@ -2,7 +2,7 @@ import { getApiBase } from '../services/api'
 
 type RentType = '' | 'long' | 'daily'
 type Category = '' | 'residential' | 'commercial'
-type ResidentialSubcategory = '' | 'apartment' | 'room' | 'house' | 'cottage'
+type ResidentialSubcategory = '' | 'apartment' | 'room' | 'studio' | 'house' | 'cottage'
 type CommercialSubcategory = '' | 'office' | 'coworking' | 'building' | 'warehouse'
 
 export type PropertyFormState = {
@@ -67,7 +67,7 @@ export function mapPropertyApiToForm(p: Record<string, unknown>): PropertyFormSt
   else if (catRaw === 'commercial' || catRaw === 'коммерция') category = 'commercial'
 
   let subRaw = str(p.subcategory ?? p.subCategory ?? '').toLowerCase()
-  const allowedResidential = new Set(['apartment', 'room', 'house', 'cottage'])
+  const allowedResidential = new Set(['apartment', 'room', 'studio', 'house', 'cottage'])
   const allowedCommercial = new Set(['office', 'coworking', 'building', 'warehouse'])
   if (!subRaw) {
     const pt = str(p.propertyType ?? p.type ?? '').toLowerCase()
@@ -94,6 +94,13 @@ export function mapPropertyApiToForm(p: Record<string, unknown>): PropertyFormSt
     prepayment = prep === 'none' ? '0' : (prep as '0' | '1' | '2')
   }
 
+  let rooms = str(p.rooms ?? p.roomsCount)
+  if (subcategory === 'studio' || subRaw === 'studio') {
+    if (rooms.toLowerCase() === 'studio' || rooms.toLowerCase() === 'студия') {
+      rooms = ''
+    }
+  }
+
   return {
     title: str(p.title),
     rentType,
@@ -104,7 +111,7 @@ export function mapPropertyApiToForm(p: Record<string, unknown>): PropertyFormSt
     district: str(p.district ?? p.region),
     metro: str(p.metro),
     apartmentNumber: str(p.apartmentNumber ?? p.apartment_number),
-    rooms: str(p.rooms ?? p.roomsCount),
+    rooms,
     totalArea: str(p.totalArea ?? p.area ?? p.square),
     livingArea: str(p.livingArea ?? p.living_area),
     kitchenArea: str(p.kitchenArea ?? p.kitchen_area),

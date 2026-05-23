@@ -236,18 +236,46 @@
 
 @media (max-width: 767px) {
   .root {
-    padding: 24px 16px 32px;
+    padding: 20px 14px 28px;
+  }
+
+  .titleRow {
+    margin-bottom: 10px;
+  }
+
+  .contentRow {
+    gap: 12px;
+  }
+
+  .filtersCard {
+    padding: 12px 14px;
   }
 
   .filtersForm {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
 
   .field,
   .fieldGroup,
   .sortField {
+    flex: 0 0 auto;
     min-width: 100%;
+    max-width: 100%;
+  }
+
+  .label {
+    margin-bottom: 2px;
+  }
+
+  .select,
+  .input {
+    padding: 8px 10px;
+  }
+
+  .priceRow {
+    gap: 6px;
   }
 
   .grid {

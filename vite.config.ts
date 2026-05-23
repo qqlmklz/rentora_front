@@ -20,7 +20,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['offline.html', 'icons/icon-192x192.png', 'icons/icon-512x512.png', 'icons/maskable-icon-512x512.png'],
+      includeAssets: ['offline.html', 'icons/pwa-192x192.png', 'icons/pwa-512x512.png'],
       manifest: {
         name: 'Rentora',
         short_name: 'Rentora',
@@ -32,17 +32,19 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: '/icons/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/icons/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: '/icons/maskable-icon-512x512.png',
+            src: '/icons/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -52,7 +54,12 @@ export default defineConfig({
       workbox: {
         // SPA: любой маршрут (/profile и т.д.) отдаём приложение (index.html)
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//, /\/offline\.html$/],
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/uploads\//,
+          /\/offline\.html$/,
+          /^\/icons\//,
+        ],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',

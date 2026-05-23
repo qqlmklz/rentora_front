@@ -140,12 +140,6 @@ export const AuthModal: FC<AuthModalProps> = ({ open, onClose, onSwitchToRegiste
             />
           </div>
 
-          <div className={styles.forgotRow}>
-            <button type="button" className={styles.linkButton} disabled={isLoading}>
-              Забыли пароль?
-            </button>
-          </div>
-
           <button
             type="submit"
             className={styles.submitButton}

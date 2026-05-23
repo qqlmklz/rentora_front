@@ -462,21 +462,141 @@
   flex-shrink: 0;
 }
 
+.hasSelectedDialog {
+  min-height: 0;
+}
+
+.backBtn {
+  display: none;
+  flex-shrink: 0;
+  margin-right: 8px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #4a43ec;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.backBtn:hover {
+  background: rgba(74, 67, 236, 0.08);
+}
+
+.backBtn:focus-visible {
+  outline: 2px solid #4a43ec;
+  outline-offset: 2px;
+}
+
+.threadHeaderRowWithBack {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
 @media (max-width: 800px) {
-  .layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+  .page {
+    --header-height: 132px;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 12px 14px 12px;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .inner {
+    flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .title {
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .errorBanner {
+    flex-shrink: 0;
+  }
+
+  .backBtn {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .layout {
+    --header-height: 132px;
+    height: calc(100dvh - var(--header-height, 0px));
+    min-height: 0;
+    overflow: hidden;
+    flex: 1;
+    display: block;
+    max-height: none;
   }
 
   .sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
     border-right: none;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-    max-height: 42vh;
-    height: auto;
   }
 
   .thread {
+    display: none;
+  }
+
+  .layout.hasSelectedDialog {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .layout.hasSelectedDialog .sidebar {
+    display: none;
+  }
+
+  .layout.hasSelectedDialog .thread {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     min-height: 0;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .layout.hasSelectedDialog .threadHeader {
+    flex-shrink: 0;
+  }
+
+  .layout.hasSelectedDialog .thread .errorBanner {
+    flex-shrink: 0;
+  }
+
+  .layout.hasSelectedDialog .threadBody {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .layout.hasSelectedDialog .messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .layout.hasSelectedDialog .composer {
+    flex-shrink: 0;
   }
 }

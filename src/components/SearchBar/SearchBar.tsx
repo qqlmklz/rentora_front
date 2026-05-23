@@ -11,6 +11,7 @@ const CATEGORIES = [
 const RESIDENTIAL_TYPES = [
   { value: 'apartment', label: 'Квартира' },
   { value: 'room', label: 'Комната' },
+  { value: 'studio', label: 'Студия' },
   { value: 'house', label: 'Дом' },
 ]
 
@@ -21,7 +22,6 @@ const COMMERCIAL_TYPES = [
 ]
 
 const ROOMS = [
-  { value: 'studio', label: 'Студия' },
   { value: '1', label: '1' },
   { value: '2', label: '2' },
   { value: '3', label: '3' },
@@ -53,7 +53,8 @@ export const SearchBar: FC = () => {
   const [filters, setFilters] = useState<SearchFilters>(initialFilters)
 
   const propertyTypes = filters.category === 'residential' ? RESIDENTIAL_TYPES : filters.category === 'commercial' ? COMMERCIAL_TYPES : []
-  const isRoomsDisabled = filters.category === 'commercial'
+  const isRoomsDisabled =
+    filters.category === 'commercial' || filters.propertyType === 'studio'
 
   const updateFilter = useCallback(<K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
     setFilters((prev) => {
@@ -61,6 +62,9 @@ export const SearchBar: FC = () => {
       if (key === 'category') {
         next.propertyType = ''
         if (value === 'commercial') next.rooms = ''
+      }
+      if (key === 'propertyType' && value === 'studio') {
+        next.rooms = ''
       }
       return next
     })

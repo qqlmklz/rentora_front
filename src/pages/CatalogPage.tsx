@@ -311,7 +311,14 @@ export function CatalogPage() {
                   id="catalog-property-type"
                   className={styles.select}
                   value={filters.propertyType ?? ''}
-                  onChange={(e) => updateFilter({ propertyType: e.target.value })}
+                  onChange={(e) => {
+                    const propertyType = e.target.value
+                    updateFilter(
+                      propertyType === 'studio'
+                        ? { propertyType, rooms: '' }
+                        : { propertyType },
+                    )
+                  }}
                   disabled={!filters.category}
                 >
                   {propertyTypeOptions.map((o) => (
@@ -331,7 +338,7 @@ export function CatalogPage() {
                   className={styles.select}
                   value={filters.rooms ?? ''}
                   onChange={(e) => updateFilter({ rooms: e.target.value })}
-                  disabled={filters.category === 'commercial'}
+                  disabled={filters.category === 'commercial' || filters.propertyType === 'studio'}
                 >
                   {ROOMS_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>

@@ -14,7 +14,7 @@ import styles from './NewPropertyPage.module.css'
 type RentType = '' | 'long' | 'daily'
 type Category = '' | 'residential' | 'commercial'
 
-type ResidentialSubcategory = '' | 'apartment' | 'room' | 'house' | 'cottage'
+type ResidentialSubcategory = '' | 'apartment' | 'room' | 'studio' | 'house' | 'cottage'
 type CommercialSubcategory = '' | 'office' | 'coworking' | 'building' | 'warehouse'
 
 type FormState = {
@@ -84,6 +84,7 @@ const initialState: FormState = {
 const RESIDENTIAL_SUBCATEGORIES = [
   { value: 'apartment', label: 'Квартира' },
   { value: 'room', label: 'Комната' },
+  { value: 'studio', label: 'Студия' },
   { value: 'house', label: 'Дом / дача' },
   { value: 'cottage', label: 'Коттедж' },
 ] as const
@@ -96,7 +97,6 @@ const COMMERCIAL_SUBCATEGORIES = [
 ] as const
 
 const ROOMS_OPTIONS = [
-  { value: 'studio', label: 'Студия' },
   { value: '1', label: '1' },
   { value: '2', label: '2' },
   { value: '3', label: '3' },
@@ -341,6 +341,9 @@ export function NewPropertyPage() {
           next.allowPets = false
         }
         return next
+      }
+      if (key === 'subcategory' && value === 'studio') {
+        return { ...prev, subcategory: value as FormState['subcategory'], rooms: '' }
       }
       return { ...prev, [key]: value }
     })
@@ -808,7 +811,7 @@ export function NewPropertyPage() {
               {form.category === 'commercial' ? 'Параметры' : 'Параметры квартиры'}
             </h2>
             <div className={styles.grid}>
-              {form.category !== 'commercial' && (
+              {form.category !== 'commercial' && form.subcategory !== 'studio' && (
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor="rooms">
                     Количество комнат
