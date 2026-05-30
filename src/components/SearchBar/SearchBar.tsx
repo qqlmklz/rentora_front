@@ -186,10 +186,11 @@ export const SearchBar: FC = () => {
           />
         </div>
 
-        <button type="submit" className={styles.submitButton}>
-          <Search size={18} aria-hidden />
-          Найти
-        </button>
+        <div className={styles.buttonWrap}>
+          <button type="submit" className={styles.submitButton} aria-label="Найти">
+            <Search size={20} strokeWidth={2.5} aria-hidden />
+          </button>
+        </div>
       </form>
     </section>
   )

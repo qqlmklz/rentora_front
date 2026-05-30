@@ -14,7 +14,7 @@ type Props = {
   data: ContractFormFields | null
   loading?: boolean
   error?: string | null
-  /** Принять / отклонить (арендатор, pending) */
+  /** Принять / отклонить (арендатор, статус pending) */
   tenantActions?: ContractViewTenantActions | null
 }
 

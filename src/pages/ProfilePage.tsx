@@ -104,7 +104,7 @@ export function ProfilePage() {
             const u = JSON.parse(raw)
             localStorage.setItem('user', JSON.stringify({ ...u, avatarUrl: url }))
           } catch {
-            // ignore
+            // игнорируем ошибку
           }
         }
       })
@@ -130,7 +130,7 @@ export function ProfilePage() {
           const u = JSON.parse(raw)
           localStorage.setItem('user', JSON.stringify({ ...u, avatarUrl: url }))
         } catch {
-          // ignore
+          // игнорируем ошибку
         }
       }
     } catch (err) {
@@ -160,7 +160,7 @@ export function ProfilePage() {
             const { avatarUrl, ...rest } = u
             localStorage.setItem('user', JSON.stringify(rest))
           } catch {
-            // ignore
+            // игнорируем ошибку
           }
         }
       })
@@ -234,7 +234,7 @@ export function ProfilePage() {
           JSON.parse(raw)
           localStorage.setItem('user', JSON.stringify(merged))
         } catch {
-          // ignore
+          // игнорируем ошибку
         }
       }
     } catch (e) {

@@ -75,7 +75,7 @@ export const PROPERTY_TYPES_BY_CATEGORY: Record<PropertyCategory, string[]> = {
   commercial: ['office', 'coworking', 'building', 'warehouse'],
 }
 
-/** Search bar / home hero — without empty “any” option */
+/** Поисковая строка / главная — без пустой опции «любое». */
 export const SEARCH_CATEGORIES = [
   { value: 'residential', label: 'Жилое' },
   { value: 'commercial', label: 'Коммерция' },
@@ -105,7 +105,7 @@ export const SEARCH_ROOMS = [
   { value: '6+', label: '6+' },
 ] as const
 
-/** New property form subcategories */
+/** Подкатегории в форме нового объявления */
 export const RESIDENTIAL_SUBCATEGORIES = [
   { value: 'apartment', label: 'Квартира' },
   { value: 'room', label: 'Комната' },
@@ -135,7 +135,7 @@ export function getPropertyTypesForCategory(category: string) {
   return []
 }
 
-/** Reset dependent filters when category / property type changes (catalog, search, form). */
+/** Сброс зависимых фильтров при смене категории / типа объекта (каталог, поиск, форма). */
 export function applyPropertyFilterCascade<T extends { category: string; propertyType: string; rooms: string }>(
   prev: T,
   key: 'category' | 'propertyType',

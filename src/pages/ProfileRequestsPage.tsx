@@ -26,7 +26,14 @@ import {
   formatCurrency,
   formatDateTimeRu,
 } from '../utils/format'
-import { isRequestOwner, isRequestTenant } from '../utils/requestRoles'
+import { isRequestOwner } from '../utils/requestRoles'
+import {
+  canShowConfirmTenantExpensesButton,
+  getExpensesSubmitted,
+  getResolutionType,
+  hasSubmittedExpenses,
+  resolutionTypeLabel,
+} from '../utils/requestResolution'
 import { sortByCreatedAtDesc } from '../utils/sort'
 import { getCurrentUserId } from '../utils/user'
 import styles from './ProfilePage.module.css'
@@ -62,12 +69,6 @@ function priorityBadgeClass(priority: ProfileRequestItem['priority']): string {
   if (priority === 'low') return pageStyles.priorityLow
   if (priority === 'high') return pageStyles.priorityHigh
   return pageStyles.priorityMedium
-}
-
-function resolutionTypeLabel(value: ProfileRequestItem['resolutionType']): string {
-  if (value === 'owner') return 'Владелец'
-  if (value === 'tenant') return 'Жилец'
-  return 'Не назначено'
 }
 
 function categoryLabel(category: string | null): string {
@@ -119,6 +120,7 @@ export function ProfileRequestsPage() {
   const ownerCompleteInFlightRef = useRef<string | null>(null)
   const [expenseBusyId, setExpenseBusyId] = useState<string | null>(null)
   const [openExpenseForms, setOpenExpenseForms] = useState<Record<string, boolean>>({})
+  const [expenseSubmittedNotice, setExpenseSubmittedNotice] = useState<Record<string, boolean>>({})
   const [expenseDrafts, setExpenseDrafts] = useState<
     Record<string, { amount: string; comment: string; photos: File[] }>
   >({})
@@ -169,7 +171,7 @@ export function ProfileRequestsPage() {
       .finally(() => setLoading(false))
   }, [applyRequestsPayload])
 
-  /** GET /api/profile/requests без полноэкранного loading (после создания, confirm, complete и т.п.). */
+  /** GET /api/profile/requests без полноэкранной загрузки (после создания, подтверждения, завершения и т.п.). */
   const refetchProfileRequests = useCallback(() => {
     setError(null)
     return fetchProfileRequests()
@@ -362,6 +364,7 @@ export function ProfileRequestsPage() {
     submitRequestExpense(requestId, payload)
       .then(() => refetchProfileRequests())
       .then(() => {
+        setExpenseSubmittedNotice((prev) => ({ ...prev, [requestId]: true }))
         setExpenseDrafts((prev) => {
           const next = { ...prev }
           delete next[requestId]
@@ -489,12 +492,13 @@ export function ProfileRequestsPage() {
               <div className={pageStyles.list}>
                 {displayedItems.map((item) => {
                   const isActiveListTab = listTab === 'active'
-                  const isTenant = isRequestTenant(currentUserId, item.requesterId)
                   const isOwner = isRequestOwner(
                     currentUserId,
                     item.propertyOwnerId,
                     item.property?.ownerId,
                   )
+                  const isTenant =
+                    String(currentUserId) === String(item.requesterId) && !isOwner
                   const isOwnerCard = isOwner
                   const photoOk = !!item.property.photoUrl && !brokenPhotos[item.id]
                   const visibleRequestPhotos = item.requestPhotos
@@ -503,24 +507,40 @@ export function ProfileRequestsPage() {
                   const visibleExpensePhotos = item.expensePhotos
                     .map((src, idx) => ({ src, idx }))
                     .filter(({ idx }) => !brokenExpensePhotos[`${item.id}-${idx}`])
+                  const resolutionType = getResolutionType(item)
+                  const requestStatus = item.status.toLowerCase()
+                  const expensesSubmitted = getExpensesSubmitted(item)
+                  const submittedExpenses = hasSubmittedExpenses(item)
+                  const isRequestCompleted = ['completed', 'closed', 'done'].includes(requestStatus)
                   const canOwnerDecideByStatus =
                     isActiveListTab &&
-                    item.status.toLowerCase() === 'pending' &&
+                    requestStatus === 'pending' &&
                     isOwner
-                  const showExpenseForm =
-                    item.resolutionType === 'tenant' && !isOwner && isTenant && !item.expenseAmount
+                  const showTenantExpenseForm =
+                    resolutionType === 'tenant' &&
+                    requestStatus === 'tenant_resolves' &&
+                    isTenant &&
+                    !expensesSubmitted &&
+                    !expenseSubmittedNotice[item.id] &&
+                    !isRequestCompleted
+                  const showExpenseSubmittedMessage =
+                    isTenant &&
+                    !isOwner &&
+                    (expensesSubmitted || expenseSubmittedNotice[item.id])
                   const isExpenseFormOpen = Boolean(openExpenseForms[item.id])
-                  const isRequestCompleted = ['completed', 'closed', 'done'].includes(
-                    item.status.toLowerCase(),
-                  )
-                  const ownerCanConfirmExpense =
-                    item.resolutionType === 'tenant' && isOwner && Boolean(item.expenseAmount)
-                  const showOwnerExpenseReview = ownerCanConfirmExpense
+                  const showOwnerExpenseReview =
+                    resolutionType === 'tenant' && isOwner && submittedExpenses
+                  const ownerCanConfirmExpense = canShowConfirmTenantExpensesButton({
+                    item,
+                    isOwner,
+                    isActiveListTab,
+                  })
                   const showOwnerCompleteButton =
                     isActiveListTab &&
                     isOwnerCard &&
-                    item.resolutionType === 'owner' &&
+                    resolutionType === 'owner' &&
                     !isRequestCompleted
+                  const aiReasonText = item.priorityReason?.trim()
                   return (
                     <article key={item.id} className={pageStyles.item}>
                       <div className={pageStyles.photoWrap}>
@@ -602,13 +622,13 @@ export function ProfileRequestsPage() {
                           )}
                           <span className={pageStyles.date}>{formatDateTimeRu(item.createdAt)}</span>
                         </div>
-                        {item.priorityStatus === 'ready' ? (
+                        {aiReasonText || item.priorityStatus === 'ready' ? (
                           <p className={pageStyles.aiReason}>
-                            Пояснение от AI: {item.priorityReason?.trim() || 'Пока недоступно'}
+                            Пояснение от AI: {aiReasonText || 'Пока недоступно'}
                           </p>
                         ) : null}
                         <p className={pageStyles.extraMeta}>
-                          Тип решения: {resolutionTypeLabel(item.resolutionType)}
+                          Тип решения: {resolutionTypeLabel(resolutionType)}
                         </p>
                         {showOwnerExpenseReview ? (
                           <>
@@ -646,10 +666,6 @@ export function ProfileRequestsPage() {
                                 </button>
                               ))}
                             </div>
-                            <p className={pageStyles.extraMeta}>
-                              Сумма: {formatCurrency(item.expenseAmount)} · Комментарий:{' '}
-                              {item.expenseComment?.trim() || '—'}
-                            </p>
                           </div>
                         ) : null}
 
@@ -704,7 +720,7 @@ export function ProfileRequestsPage() {
                           </div>
                         ) : null}
 
-                        {showExpenseForm ? (
+                        {showTenantExpenseForm ? (
                           <div className={pageStyles.expenseFormWrap}>
                             <button
                               type="button"
@@ -712,7 +728,7 @@ export function ProfileRequestsPage() {
                               onClick={() => toggleExpenseForm(item.id)}
                               disabled={expenseBusyId === item.id}
                             >
-                              {isExpenseFormOpen ? 'Указать расходы ▾' : 'Указать расходы ▸'}
+                              Указать расходы
                             </button>
                             <div
                               className={`${pageStyles.expenseFormCollapse} ${
@@ -769,6 +785,10 @@ export function ProfileRequestsPage() {
                               </div>
                             </div>
                           </div>
+                        ) : null}
+
+                        {showExpenseSubmittedMessage ? (
+                          <p className={pageStyles.extraMeta}>Расходы отправлены владельцу</p>
                         ) : null}
                       </div>
                     </article>

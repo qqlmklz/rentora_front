@@ -1,4 +1,4 @@
-/** Compare user ids from API / localStorage (string-safe). */
+/** Сравнение id пользователей из API / localStorage (безопасно для строк). */
 export function isSameUser(a: string | null | undefined, b: string | null | undefined): boolean {
   if (a == null || b == null || a === '' || b === '') return false
   return String(a) === String(b)

@@ -151,7 +151,7 @@ export function normalizePhotoPathForStorage(path: string): string {
     try {
       p = new URL(p).pathname
     } catch {
-      /* ignore */
+      /* игнорируем ошибку парсинга */
     }
   }
   if (!p.startsWith('/')) p = `/${p}`

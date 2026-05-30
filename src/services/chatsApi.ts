@@ -18,7 +18,7 @@ export function getChatsWebSocketUrl(): string {
       u.hash = ''
       return u.toString()
     } catch {
-      /* fall through */
+      /* переходим к следующему варианту URL */
     }
   }
   return 'ws://localhost:8080/ws/chats'

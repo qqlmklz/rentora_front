@@ -1,3 +1,4 @@
+import { getResolutionType } from '../utils/requestResolution'
 import { getApiBase, getAuthHeaders, getProfileUrl } from './api'
 
 export type RequestPropertyInfo = {
@@ -26,8 +27,13 @@ export type ProfileRequestItem = {
   expenseAmount: number | null
   expenseComment: string | null
   expensePhotos: string[]
-  /** True if owner confirmed tenant-submitted expenses (when returned by API). */
+  /** Жилец отправил расходы (флаг с бэкенда или вывод по данным). */
+  expensesSubmitted: boolean
+  /** Владелец подтвердил расходы жильца. */
+  expensesConfirmed: boolean
+  /** Синоним expensesConfirmed (совместимость с полями ответа API). */
   expenseConfirmedByOwner: boolean
+  tenantExpensesConfirmedAt: string | null
   /** Заявка в архиве (сервер) или выведена из активных по статусу completed/closed/done. */
   isArchived: boolean
   currentUserRole: 'owner' | 'tenant' | null
@@ -181,6 +187,55 @@ function fallbackPropertyFromRequest(r: Record<string, unknown>, requestId: stri
   }
 }
 
+const SYSTEM_PRIORITY_REASONS = new Set([
+  'приоритет определяется',
+  'приоритет определён по умолчанию',
+])
+
+function parseExpenseAmount(raw: unknown): number | null {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string') {
+    const normalized = raw.trim().replace(/\s/g, '').replace(',', '.')
+    if (!normalized) return null
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+
+function extractAiPriorityReason(r: Record<string, unknown>): string | null {
+  const raw = String(r.priority_reason ?? r.priorityReason ?? r.ai_reason ?? '').trim()
+  if (!raw) return null
+  if (SYSTEM_PRIORITY_REASONS.has(raw.toLowerCase())) return null
+  return raw
+}
+
+function parseExpensesSubmittedFlag(r: Record<string, unknown>): boolean {
+  const raw = r.expenses_submitted ?? r.expensesSubmitted
+  if (raw === true || raw === 'true' || raw === 1 || raw === '1') return true
+  return false
+}
+
+function parseExpensesConfirmedFlag(r: Record<string, unknown>): boolean {
+  const raw =
+    r.expenses_confirmed ??
+    r.expensesConfirmed ??
+    r.expense_confirmed_by_owner ??
+    r.expenseConfirmedByOwner ??
+    r.expense_confirmed ??
+    r.expenseConfirmed ??
+    r.owner_confirmed_expense ??
+    r.ownerConfirmedExpense
+  return raw === true || raw === 'true' || raw === 1 || raw === '1'
+}
+
+function parseTenantExpensesConfirmedAt(r: Record<string, unknown>): string | null {
+  const raw = r.tenant_expenses_confirmed_at ?? r.tenantExpensesConfirmedAt
+  if (raw == null || raw === '') return null
+  const value = String(raw).trim()
+  return value === '' ? null : value
+}
+
 function normalizePhotoList(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
   return raw
@@ -254,7 +309,7 @@ function extractRequestItemId(r: Record<string, unknown>): string | null {
   return coerceIdString(r.id ?? r._id ?? r.requestId)
 }
 
-/** Сначала только `property` из ответа (как прислал backend), без подмены другими полями заявки. */
+/** Сначала только `property` из ответа (как прислал бэкенд), без подмены другими полями заявки. */
 function resolvePropertyForItem(r: Record<string, unknown>, requestIdStr: string): RequestPropertyInfo {
   const prop = r.property
   if (prop != null && typeof prop === 'object' && !Array.isArray(prop)) {
@@ -310,17 +365,12 @@ function normalizeRequestItem(raw: unknown): ProfileRequestItem | null {
   const priorityPending = priorityStatus === 'pending'
   const priority: 'low' | 'medium' | 'high' =
     rawPriority === 'low' || rawPriority === 'high' ? rawPriority : 'medium'
-  const priorityReason =
-    priorityStatus === 'ready'
-      ? rawPriorityReason || null
-      : priorityStatus === 'pending'
-        ? 'Приоритет определяется'
-        : 'Приоритет определён по умолчанию'
-  const rawResolutionType = String(
-    r.resolution_type ?? r.resolutionType ?? '',
-  ).trim().toLowerCase()
-  const resolutionType: 'owner' | 'tenant' | null =
-    rawResolutionType === 'owner' || rawResolutionType === 'tenant' ? rawResolutionType : null
+  const priorityReason = extractAiPriorityReason(r)
+  const resolutionType = getResolutionType({
+    resolution_type: r.resolution_type,
+    resolutionType: r.resolutionType,
+    status: r.status ?? r.state,
+  })
   const rawCurrentUserRole = String(
     r.current_user_role ?? r.currentUserRole ?? r.user_role ?? '',
   ).trim().toLowerCase()
@@ -368,7 +418,7 @@ function normalizeRequestItem(raw: unknown): ProfileRequestItem | null {
   const canMakeDecision =
     Boolean(r.can_make_decision ?? r.canMakeDecision) ||
     (currentUserRole === 'owner' && (normalizedStatus === 'pending' || normalizedStatus === 'in_review'))
-  const isTenantScenario = rawResolutionType === 'tenant' || normalizedStatus === 'tenant_resolves'
+  const isTenantScenario = resolutionType === 'tenant' || normalizedStatus === 'tenant_resolves'
   const isRequesterTenant =
     requesterId && currentUserId ? String(requesterId) === String(currentUserId) : true
   const canSubmitExpense =
@@ -390,22 +440,19 @@ function normalizeRequestItem(raw: unknown): ProfileRequestItem | null {
     ),
     priorityReason,
     resolutionType,
-    expenseAmount:
-      typeof r.expense_amount === 'number'
-        ? r.expense_amount
-        : typeof r.expenseAmount === 'number'
-          ? r.expenseAmount
-          : null,
+    expenseAmount: parseExpenseAmount(r.expense_amount ?? r.expenseAmount),
     expenseComment: (r.expense_comment ?? r.expenseComment ?? null) as string | null,
     expensePhotos: normalizePhotoList(r.expense_photos ?? r.expensePhotos),
-    expenseConfirmedByOwner: Boolean(
-      r.expense_confirmed_by_owner ??
-        r.expenseConfirmedByOwner ??
-        r.expense_confirmed ??
-        r.expenseConfirmed ??
-        r.owner_confirmed_expense ??
-        r.ownerConfirmedExpense,
-    ),
+    expensesSubmitted: parseExpensesSubmittedFlag(r),
+    expensesConfirmed: (() => {
+      const confirmedAt = parseTenantExpensesConfirmedAt(r)
+      return parseExpensesConfirmedFlag(r) || confirmedAt != null
+    })(),
+    expenseConfirmedByOwner: (() => {
+      const confirmedAt = parseTenantExpensesConfirmedAt(r)
+      return parseExpensesConfirmedFlag(r) || confirmedAt != null
+    })(),
+    tenantExpensesConfirmedAt: parseTenantExpensesConfirmedAt(r),
     isArchived,
     currentUserRole,
     currentUserId: currentUserId ? String(currentUserId) : null,
@@ -728,18 +775,21 @@ export async function submitRequestExpense(
   requestId: string,
   payload: SubmitRequestExpensePayload,
 ): Promise<ProfileRequestItem | null> {
-  const url = getProfileUrl(`/api/requests/${encodeURIComponent(requestId)}/expense`)
+  const url = getProfileUrl(`/api/requests/${encodeURIComponent(requestId)}/submit-expenses`)
   const formData = new FormData()
   formData.append('expenseAmount', String(payload.amount))
+  formData.append('expense_amount', String(payload.amount))
   formData.append('expenseComment', payload.comment.trim())
+  formData.append('expense_comment', payload.comment.trim())
   ;(payload.photos ?? []).forEach((photo, index) => {
     formData.append('expensePhotos', photo, photo.name || `expense-${index + 1}.jpg`)
+    formData.append('expense_photos', photo, photo.name || `expense-${index + 1}.jpg`)
   })
   const token = localStorage.getItem('token')
   const headers: Record<string, string> = {}
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(url, {
-    method: 'PATCH',
+    method: 'POST',
     headers,
     body: formData,
   })
@@ -751,7 +801,7 @@ export async function submitRequestExpense(
   return normalizeRequestItem(data) ?? normalizeRequestItem((data as Record<string, unknown>).request) ?? null
 }
 
-/** Owner confirms tenant-submitted expenses; backend should set status to completed. */
+/** Владелец подтверждает расходы жильца; бэкенд должен выставить status completed. */
 export async function confirmRequestExpense(requestId: string): Promise<ProfileRequestItem | null> {
   const url = getProfileUrl(`/api/requests/${encodeURIComponent(requestId)}/confirm-tenant-expenses`)
   console.log('[Requests API] confirm tenant expenses:', { requestId, url, method: 'POST' })
@@ -817,7 +867,7 @@ async function readApiErrorMessage(res: Response, fallback: string): Promise<str
       if (typeof message === 'string' && message.trim()) return message.trim()
     }
   } catch {
-    /* fall through */
+    /* переходим к чтению текста ответа */
   }
   const text = await res.text().catch(() => '')
   return text.trim() || fallback

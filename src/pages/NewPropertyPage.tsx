@@ -161,7 +161,7 @@ export function NewPropertyPage() {
   /** Новые файлы (только что выбранные пользователем) */
   const [newPhotos, setNewPhotos] = useState<File[]>([])
   const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
-  /** Пути сохранённых на бэке фото (оставшиеся после удаления из UI) — уходит в PATCH existingPhotos */
+  /** Пути сохранённых на бэке фото (оставшиеся после удаления в интерфейсе) — уходит в PATCH existingPhotos */
   const [existingPhotos, setExistingPhotos] = useState<string[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
   const [submitLoading, setSubmitLoading] = useState(false)

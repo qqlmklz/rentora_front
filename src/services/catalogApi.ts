@@ -7,7 +7,7 @@ export type CatalogFilters = {
   priceFrom?: string
   priceTo?: string
   location?: string
-  /** UI + URL; `cheapest` / `expensive` сортируются на клиенте, в API не уходят */
+  /** Параметры UI и URL; `cheapest` / `expensive` сортируются на клиенте, в API не уходят */
   sort?: string
 }
 
@@ -42,7 +42,7 @@ function resolveAssetUrl(value?: string | null): string | null {
 
   const base = getApiBase()
 
-  // Для путей /uploads/... всегда добавляем base URL
+  // Для путей /uploads/... всегда добавляем базовый URL
   if (value.startsWith('/uploads')) {
     const apiBase = base || 'http://localhost:8080'
     return `${apiBase}${value}`
@@ -81,7 +81,7 @@ export async function fetchCatalog(filters: CatalogFilters): Promise<CatalogItem
     const p = raw?.property ?? raw
     const id = p?.id ?? p?._id ?? raw?.id
 
-    // Debug: логируем photos для диагностики
+    // Отладка: логируем photos для диагностики
     if (p?.photos !== undefined) {
       console.log('[Catalog] property.photos:', p.photos)
     }
@@ -98,7 +98,7 @@ export async function fetchCatalog(filters: CatalogFilters): Promise<CatalogItem
       }
     }
 
-    // Fallback на другие поля
+    // Запасной вариант: другие поля с фото
     if (!photo && p?.photoUrl) photo = p.photoUrl
     if (!photo && p?.image) photo = p.image
     if (!photo && p?.image_url) photo = p.image_url

@@ -21,7 +21,7 @@ function resolveAssetUrl(value?: string | null): string | null {
 
   const base = getApiBase()
 
-  // Для путей /uploads/... всегда добавляем base URL
+  // Для путей /uploads/... всегда добавляем базовый URL
   if (value.startsWith('/uploads')) {
     const apiBase = base || 'http://localhost:8080'
     return `${apiBase}${value}`

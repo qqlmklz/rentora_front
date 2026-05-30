@@ -1,4 +1,4 @@
-/** Central route paths — keep in sync with `main.tsx` */
+/** Централизованные пути маршрутов — синхронизировать с `main.tsx`. */
 export const ROUTES = {
   home: '/',
   catalog: '/catalog',

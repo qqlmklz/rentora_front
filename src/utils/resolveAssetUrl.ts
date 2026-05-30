@@ -1,6 +1,6 @@
 import { getApiBase } from '../services/api'
 
-/** Resolve photo/upload path to absolute URL (catalog, profile, chats, forms). */
+/** Преобразует путь к фото/загрузке в абсолютный URL (каталог, профиль, чаты, формы). */
 export function resolveAssetUrl(value?: string | null): string | null {
   if (!value) return null
   if (/^https?:\/\//.test(value)) return value

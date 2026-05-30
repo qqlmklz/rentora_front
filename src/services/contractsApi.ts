@@ -164,7 +164,7 @@ export async function fetchContract(contractId: string): Promise<ChatContract> {
   return c
 }
 
-/** Тело POST /contracts — ключи в camelCase, как ожидает backend */
+/** Тело POST /contracts — ключи в camelCase, как ожидает бэкенд */
 export function buildContractPayload(fields: ContractFormFields): Record<string, unknown> {
   return {
     landlordName: fields.landlordName.trim(),

@@ -12,7 +12,7 @@ const NAV_ITEMS: { key: ProfileNavKey; label: string; to: string }[] = [
 
 type Props = {
   active: ProfileNavKey
-  /** ProfilePage uses <a> for active profile link — preserve behavior */
+  /** На ProfilePage для активной ссылки «Профиль» используется <a> — сохраняем поведение */
   profileUsesAnchor?: boolean
   linkClassName: string
   activeLinkClassName: string
